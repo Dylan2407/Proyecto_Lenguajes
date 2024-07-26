@@ -182,6 +182,31 @@ BEGIN
     CLOSE c_cantones;
 END;
 
+--CURSOR PARA LISTAR LOS CANTONES EN UN RANGO DE ID
+DECLARE
+    CURSOR C_CANTONES IS
+        SELECT ID_CANTON, NOMBRE_CANTON, ID_PROVINCIA
+        FROM TBL_CANTON
+        WHERE ID_CANTON BETWEEN 100 AND 110
+        ORDER BY ID_CANTON;
+
+    v_id_canton TBL_CANTON.ID_CANTON%TYPE;
+    v_nombre_canton TBL_CANTON.NOMBRE_CANTON%TYPE;
+    v_id_provincia TBL_CANTON.ID_PROVINCIA%TYPE;
+BEGIN
+    OPEN C_CANTONES;
+
+    LOOP
+        FETCH C_CANTONES INTO v_id_canton, v_nombre_canton, v_id_provincia;
+        EXIT WHEN C_CANTONES%NOTFOUND;
+
+        DBMS_OUTPUT.PUT_LINE('ID CANTON: ' || v_id_canton || ', NOMBRE DEL CANTON: ' || v_nombre_canton || ', ID PROVINCIA: ' || v_id_provincia);
+    END LOOP;
+
+    CLOSE C_CANTONES;
+END;
+
+
 
 
 -- Insercion de cantones
