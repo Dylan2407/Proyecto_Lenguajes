@@ -1,5 +1,17 @@
 SET SERVEROUTPUT ON;
 
+-- Verifica que no exista la tabla
+DECLARE
+    tabla VARCHAR2(31) := 'TBL_CLIENTE CASCADE CONSTRAINTS';
+BEGIN
+  EXECUTE IMMEDIATE 'DROP TABLE ' || tabla;
+  DBMS_OUTPUT.PUT_LINE('LA TABLA ' || tabla || ' FUE ENCONTRADA Y ELIMINADA EXITOSAMENTE');
+EXCEPTION
+  WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('LA TABLA ' || tabla || ' NO EXISTE');
+END;
+/
+
 CREATE TABLE TBL_CLIENTE (
 ID_CLIENTE NUMBER NOT NULL PRIMARY KEY,
 CEDULA NUMBER NOT NULL,
@@ -36,8 +48,7 @@ begin
         dbms_output.put_line('REGISTRO REALIZADO');
     end if;
 end;
-
-
+/
 -- PROCEDIMIENTO PARA LEER DATOS DE UN CLIENTE
 CREATE OR REPLACE PROCEDURE sp_leer_cliente(
     p_id_cliente NUMBER
@@ -60,7 +71,7 @@ exception
     when no_data_found then
     dbms_output.put_line('EL CLIENTE CON EL ID ' || p_id_cliente || ' NO FUE ENCONTRADO.');
 end;
-
+/
 
 -- PROCEDIMIENTO PARA ACTUALIZAR UN CLIENTE
 CREATE OR REPLACE PROCEDURE sp_actualizar_cliente(
@@ -89,7 +100,7 @@ begin
         dbms_output.put_line('EL CLIENTE CON EL ID ' || p_id_cliente || ' NO FUE ENCONTRADO.');
     end if;
 end;
-
+/
 
 -- PROCEDIMIENTO PARA ELIMINAR UN CLIENTE
 CREATE OR REPLACE PROCEDURE sp_eliminar_cliente(
@@ -111,11 +122,12 @@ begin
         dbms_output.put_line('EL CLIENTE CON EL ID ' || p_id_cliente || ' NO FUE ENCONTRADO.');
     end if;
 end;
+/
 
 EXEC sp_insertar_cliente(1, 12543523, 'Dylan','CANDIA', 987654321, '25-JUL-24', 'Avenida 1');
 EXEC sp_leer_cliente(1);
 EXEC sp_actualizar_cliente(1, 987654535, 'DYLAN', 'Candia', 654874687, '20-JUL-24', 'Avenida 2');
-EXEC sp_eliminar_cliente(1);
+//EXEC sp_eliminar_cliente(1);
 
 --PROCEDIMIENTO PARA LISTAR TODOS LOS CLIENTES REGISTRADOS
 CREATE OR REPLACE PROCEDURE SP_LISTAR_CLIENTES as
@@ -124,6 +136,7 @@ begin
         dbms_output.put_line('ID: ' || cliente.ID_CLIENTE || ', CEDULA: ' || cliente.CEDULA || ', NOMBRE: ' || cliente.NOMBRE || ', APELLIDO: ' || cliente.APELLIDO || ', TELEFONO: ' || cliente.TELEFONO || ', FECHA INGRESO: ' || cliente.FECHAINGRESO || ', DIRECCION: ' || cliente.DIRECCION);
     end loop;
 end;
+/
 
 --PROCEDIMIENTO PARA BUSCAR CLIENTES QUE SE REGISTRARON EN UN RANGO DE FECHAS
 CREATE OR REPLACE PROCEDURE SP_BUSCAR_CLIENTES_POR_RANGO_FECHA(
@@ -147,7 +160,7 @@ begin
         end loop;
     end if;
 end;
-
+/
 
 EXEC SP_LISTAR_CLIENTES;
 EXEC SP_BUSCAR_CLIENTES_POR_RANGO_FECHA(TO_DATE('01-JUL-24', 'DD-MON-YY'), TO_DATE('31-JUL-24', 'DD-MON-YY'));
@@ -171,6 +184,7 @@ BEGIN
     END LOOP;
     CLOSE c_clientes;
 END;
+/
 
 --CURSOR PARA BUSCAR CLIENTES QUE SE UNIERON EN EL AÑO Y MES ACTUAL
 DECLARE
@@ -204,7 +218,7 @@ IS
     CEDULA TBL_CLIENTE.CEDULA%TYPE;
     NOMBRE TBL_CLIENTE.NOMBRE%TYPE;
 BEGIN
-    -- Buscar el nombre del canton en la tabla TBL_CANTON
+    -- Buscar el nombre del cliente en la tabla TBL_CLIENTE basado en la cedula
     SELECT C.CEDULA, C.NOMBRE
     INTO CEDULA, NOMBRE
     FROM TBL_CLIENTE C
@@ -225,7 +239,7 @@ RETURN VARCHAR2
 IS
     NOMBRE TBL_CLIENTE.NOMBRE%TYPE;
 BEGIN
-    -- Buscar el nombre del canton en la tabla TBL_CANTON
+    -- Buscar el nombre completo del cliente en la tabla TBL_CLIENTE basado en el nombre
     SELECT C.NOMBRE || ' ' || C.APELLIDO NOMBRE_COMPLETO
     INTO NOMBRE
     FROM TBL_CLIENTE C
@@ -248,10 +262,29 @@ SELECT CEDULA || ' ' || Upper(NOMBRE) || ' ' || Upper(APELLIDO) "INFORMACION PER
 CREATE OR REPLACE VIEW VISTA_CANTIDAD_DE_CLIENTES AS 
 SELECT COUNT(CEDULA) "CANTIDAD DE CLIENTES" FROM TBL_CLIENTE WITH READ ONLY;
 
+--Probando Insercion
+-- Inserciones de ejemplo en la tabla TBL_CLIENTE
+
+-- Inserción 1
+EXEC sp_insertar_cliente(1, 246813579, 'Marshall', 'Zarate', 9876543210, TO_DATE('2024-01-15', 'YYYY-MM-DD'), 'Calle Falsa 123, Ciudad Ficticia');
+
+-- Inserción 2
+EXEC sp_insertar_cliente(2, 135792468, 'Luis', 'Guerra', 1234567890, TO_DATE('2024-02-20', 'YYYY-MM-DD'), 'Avenida Siempre Viva 742, Ciudad Real');
+
+-- Inserción 3
+EXEC sp_insertar_cliente(3, 864209753, 'Rocío', 'Jimenez', 2468135790, TO_DATE('2024-03-10', 'YYYY-MM-DD'), 'Boulevard de los Sueños 100, Villa Esperanza');
+
+-- Inserción 4
+EXEC sp_insertar_cliente(4, 999999999, 'Juan', 'Carmona', 1357924680, TO_DATE('2024-04-05', 'YYYY-MM-DD'), 'Plaza Mayor 500, Ciudad Dorada');
+
+-- Inserción 5
+EXEC sp_insertar_cliente(5, 505050505, 'Wanda', 'Nara', 8642097531, TO_DATE('2024-05-25', 'YYYY-MM-DD'), 'Calle del Sol 50, Colina Verde');
+
+
 --LLAMAR A LA VISTA CLIENTE
 SELECT "INFORMACION PERSONAL", "Fecha de ingreso" FROM VISTA_LISTAR_CLIENTES;
 SELECT "CANTIDAD DE CLIENTES" from VISTA_CANTIDAD_DE_CLIENTES;
 
 --Llamando funciones de Cliente
-SELECT CONSULTAR_CLIENTE_CON_CEDULA(12543523) FROM DUAL;
+SELECT CONSULTAR_CLIENTE_CON_CEDULA(505050505) FROM DUAL;
 SELECT CONSULTAR_CLIENTE_POR_NOMBRE('DYLAN') FROM DUAL;
