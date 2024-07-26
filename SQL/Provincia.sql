@@ -55,9 +55,9 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('Registro actualizado exitosamente');
 EXCEPTION
     WHEN NO_DATA_FOUND THEN
-        DBMS_OUTPUT.PUT_LINE('No se encontró un registro con el ID ' || P_ID_PROVINCIA);
+        DBMS_OUTPUT.PUT_LINE('No se encontrÃ³ un registro con el ID ' || P_ID_PROVINCIA);
     WHEN OTHERS THEN
-        DBMS_OUTPUT.PUT_LINE('Error al procesar la operación');
+        DBMS_OUTPUT.PUT_LINE('Error al procesar la operaciÃ³n');
 END SP_ACTUALIZAR_PROVINCIA;
 /
 
@@ -73,9 +73,9 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('Registro eliminado exitosamente');
 EXCEPTION
     WHEN NO_DATA_FOUND THEN
-        DBMS_OUTPUT.PUT_LINE('No se encontró un registro con el ID ' || P_ID_PROVINCIA);
+        DBMS_OUTPUT.PUT_LINE('No se encontrÃ³ un registro con el ID ' || P_ID_PROVINCIA);
     WHEN OTHERS THEN
-        DBMS_OUTPUT.PUT_LINE('Error al procesar la operación');
+        DBMS_OUTPUT.PUT_LINE('Error al procesar la operaciÃ³n');
 END SP_ELIMINAR_PROVINCIA;
 /
 
@@ -98,6 +98,28 @@ EXCEPTION
 END;
 /
 
+--Inicia bloque funciones
+CREATE OR REPLACE FUNCTION CONSULTAR_PROVINCIA(ID_PROVINCIA NUMBER)
+RETURN VARCHAR2
+IS
+    NOMBRE_PROVINCIA TBL_PROVINCIA.NOMBRE_PROVINCIA%TYPE;
+BEGIN
+    -- Buscar el nombre de la provincia en la tabla TBL_PROVINCIA
+    SELECT NOMBRE_PROVINCIA 
+    INTO NOMBRE_PROVINCIA
+    FROM TBL_PROVINCIA
+    WHERE ID_PROVINCIA = CONSULTAR_PROVINCIA.ID_PROVINCIA;
+
+    -- Retornar el resultado
+    RETURN 'EL NOMBRE DE LA PROVINCIA ES ' || NOMBRE_PROVINCIA;
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        RETURN 'PROVINCIA NO ENCONTRADA';
+    WHEN OTHERS THEN
+        RETURN 'ERROR AL CONSULTAR LA PROVINCIA';
+END;
+/
+
 --VISTA PARA LISTAR TODAS LAS PROVINCIAS
 CREATE OR REPLACE VIEW VISTA_LISTAR_PROVINCIAS AS 
 SELECT ID_PROVINCIA "NUMERO DE PROVINCIA", Upper(NOMBRE_PROVINCIA) "NOMBRE DE LA PROVINCIA" FROM TBL_PROVINCIA ORDER BY ID_PROVINCIA WITH READ ONLY;
@@ -107,13 +129,13 @@ CREATE OR REPLACE VIEW VISTA_CANTIDAD_DE_PROVINCIAS AS
 SELECT COUNT(ID_PROVINCIA) "CANTIDAD DE PROVINCIAS" FROM TBL_PROVINCIA WITH READ ONLY;
 
 -- Bloque CRUD con SPs para TBL_PROVINCIA
-exec sp_insertar_provincia(1,'San José');
+exec sp_insertar_provincia(1,'San JosÃ©');
 exec sp_insertar_provincia(2,'Alajuela');
 exec sp_insertar_provincia(3,'Cartago');
 exec sp_insertar_provincia(4,'Heredia');
 exec sp_insertar_provincia(5,'Guanacaste');
 exec sp_insertar_provincia(6,'Puntarenas');
-exec sp_insertar_provincia(7,'Limón');
+exec sp_insertar_provincia(7,'LimÃ³n');
 
 //exec sp_actualizar_provincia(1, 'Colorado');
 //exec sp_eliminar_provincia(1);
@@ -123,3 +145,5 @@ exec sp_leer_provincia(2);
 SELECT "NUMERO DE PROVINCIA", "NOMBRE DE LA PROVINCIA" FROM vista_listar_provincias;
 SELECT "CANTIDAD DE PROVINCIAS" FROM VISTA_CANTIDAD_DE_PROVINCIAS;
 
+--Llamando funciones de Provincia, remplazar numero dentro de Consultar_Provincia por provincia que desea consultar
+SELECT CONSULTAR_PROVINCIA(4) AS RESULTADO FROM DUAL;
