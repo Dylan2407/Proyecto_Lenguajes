@@ -134,9 +134,9 @@ EXEC sp_leer_direccion(1);
 EXEC sp_actualizar_direccion(1, 'Avenida 2 frente a la planta de chayotes', 1);
 --EXEC sp_eliminar_direccion(1);
 
+EXEC SP_INSERTAR_DIRECCION(1, 'Avenida 1 Detras Del Palo De Mangos', 1);
+EXEC SP_INSERTAR_DIRECCION(2, 'Calle Hernandez frente al taller Juanito', 1);
+
 -- Ejecucion de la vista Direccion
 SELECT "DIRECCION COMPLETA", ID_DISTRITO FROM vista_listar_direcciones;
 SELECT "CANTIDAD DE DIRECCIONES" FROM vista_cantidad_de_direcciones;
-
-
-
