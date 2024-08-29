@@ -27,101 +27,147 @@ FECHA_DE_REGISTRO DATE NOT NULL,
 CONSTRAINT UQ_CEDULA_JURIDICA UNIQUE(CEDULA_JURIDICA)
 );
 
--- SP para insertar proveedor
-CREATE OR REPLACE PROCEDURE SP_INSERTAR_PROVEEDOR(
-P_CEDULA_JURIDICA TBL_PROVEEDOR.CEDULA_JURIDICA%TYPE,
-P_NOMBRE TBL_PROVEEDOR.NOMBRE%TYPE,
-P_DIRECCION TBL_PROVEEDOR.DIRECCION%TYPE,
-P_TELEFONO TBL_PROVEEDOR.TELEFONO%TYPE,
-P_FECHA_DE_REGISTRO TBL_PROVEEDOR.FECHA_DE_REGISTRO%TYPE
-)
-AS
- V_COUNT NUMBER;
-BEGIN
-    SELECT COUNT(*)
-    INTO V_COUNT
-    FROM TBL_PROVEEDOR
-    WHERE CEDULA_JURIDICA = P_CEDULA_JURIDICA;
+CREATE OR REPLACE PACKAGE pkg_proveedor_utilidades AS
 
-    IF V_COUNT > 0 THEN
-        DBMS_OUTPUT.PUT_LINE('YA EXISTE UN REGISTRO CON LA CEDULA JURIDICA ' || P_CEDULA_JURIDICA);
-    ELSE
-        INSERT INTO TBL_PROVEEDOR(CEDULA_JURIDICA,NOMBRE,DIRECCION,TELEFONO,FECHA_DE_REGISTRO)
-        VALUES (P_CEDULA_JURIDICA,P_NOMBRE,P_DIRECCION,P_TELEFONO,P_FECHA_DE_REGISTRO);
-        COMMIT;
-        DBMS_OUTPUT.PUT_LINE('REGISTRO REALIZADO');
-    END IF;
-END;
+    -- Procedimiento para insertar proveedor
+    PROCEDURE sp_insertar_proveedor(
+        p_cedula_juridica TBL_PROVEEDOR.CEDULA_JURIDICA%TYPE,
+        p_nombre TBL_PROVEEDOR.NOMBRE%TYPE,
+        p_direccion TBL_PROVEEDOR.DIRECCION%TYPE,
+        p_telefono TBL_PROVEEDOR.TELEFONO%TYPE,
+        p_fecha_de_registro TBL_PROVEEDOR.FECHA_DE_REGISTRO%TYPE
+    );
+
+    -- Procedimiento para actualizar proveedor
+    PROCEDURE sp_actualizar_proveedor(
+        p_cedula_juridica TBL_PROVEEDOR.CEDULA_JURIDICA%TYPE,
+        p_nombre TBL_PROVEEDOR.NOMBRE%TYPE,
+        p_direccion TBL_PROVEEDOR.DIRECCION%TYPE,
+        p_telefono TBL_PROVEEDOR.TELEFONO%TYPE,
+        p_fecha_de_registro TBL_PROVEEDOR.FECHA_DE_REGISTRO%TYPE
+    );
+
+    -- Procedimiento para eliminar proveedor
+    PROCEDURE sp_eliminar_proveedor(
+        p_cedula_juridica TBL_PROVEEDOR.CEDULA_JURIDICA%TYPE
+    );
+
+    -- Procedimiento para leer proveedor por cédula jurídica
+    PROCEDURE sp_leer_proveedores(
+        p_cedula_juridica TBL_PROVEEDOR.CEDULA_JURIDICA%TYPE
+    );
+
+END pkg_proveedor_utilidades;
 /
 
--- SP para actualizar registros en la tabla proveedor
-CREATE OR REPLACE PROCEDURE SP_ACTUALIZAR_PROVEEDOR(
-P_CEDULA_JURIDICA TBL_PROVEEDOR.CEDULA_JURIDICA%TYPE,
-P_NOMBRE TBL_PROVEEDOR.NOMBRE%TYPE,
-P_DIRECCION TBL_PROVEEDOR.DIRECCION%TYPE,
-P_TELEFONO TBL_PROVEEDOR.TELEFONO%TYPE,
-P_FECHA_DE_REGISTRO TBL_PROVEEDOR.FECHA_DE_REGISTRO%TYPE
-) AS
- V_COUNT NUMBER;
-BEGIN
-    SELECT COUNT(*)
-    INTO V_COUNT
-    FROM TBL_PROVEEDOR
-    WHERE CEDULA_JURIDICA = P_CEDULA_JURIDICA;
+CREATE OR REPLACE PACKAGE BODY pkg_proveedor_utilidades AS
 
-    IF V_COUNT > 0 THEN
-        UPDATE TBL_PROVEEDOR
-        SET CEDULA_JURIDICA = P_CEDULA_JURIDICA, NOMBRE = P_NOMBRE, DIRECCION = P_DIRECCION, TELEFONO = P_TELEFONO, FECHA_DE_REGISTRO = P_FECHA_DE_REGISTRO
-        WHERE CEDULA_JURIDICA = P_CEDULA_JURIDICA;
-        COMMIT;
-        DBMS_OUTPUT.PUT_LINE('EL TBL_PROVEEDOR CON EL ID ' || P_CEDULA_JURIDICA || ' HA SIDO ACTUALIZADO.');
-    ELSE 
-        DBMS_OUTPUT.PUT_LINE('EL TBL_PROVEEDOR CON EL ID ' || P_CEDULA_JURIDICA || ' NO FUE ENCONTRADO.');
-    END IF;
-END;
+    -- Implementación del procedimiento para insertar proveedor
+    PROCEDURE sp_insertar_proveedor(
+        p_cedula_juridica TBL_PROVEEDOR.CEDULA_JURIDICA%TYPE,
+        p_nombre TBL_PROVEEDOR.NOMBRE%TYPE,
+        p_direccion TBL_PROVEEDOR.DIRECCION%TYPE,
+        p_telefono TBL_PROVEEDOR.TELEFONO%TYPE,
+        p_fecha_de_registro TBL_PROVEEDOR.FECHA_DE_REGISTRO%TYPE
+    ) AS
+        v_count NUMBER;
+    BEGIN
+        SELECT COUNT(*)
+        INTO v_count
+        FROM TBL_PROVEEDOR
+        WHERE CEDULA_JURIDICA = p_cedula_juridica;
+
+        IF v_count > 0 THEN
+            DBMS_OUTPUT.PUT_LINE('YA EXISTE UN REGISTRO CON LA CEDULA JURIDICA ' || p_cedula_juridica);
+        ELSE
+            INSERT INTO TBL_PROVEEDOR(CEDULA_JURIDICA, NOMBRE, DIRECCION, TELEFONO, FECHA_DE_REGISTRO)
+            VALUES (p_cedula_juridica, p_nombre, p_direccion, p_telefono, p_fecha_de_registro);
+            COMMIT;
+            DBMS_OUTPUT.PUT_LINE('REGISTRO REALIZADO');
+        END IF;
+    END sp_insertar_proveedor;
+
+    -- Implementación del procedimiento para actualizar proveedor
+    PROCEDURE sp_actualizar_proveedor(
+        p_cedula_juridica TBL_PROVEEDOR.CEDULA_JURIDICA%TYPE,
+        p_nombre TBL_PROVEEDOR.NOMBRE%TYPE,
+        p_direccion TBL_PROVEEDOR.DIRECCION%TYPE,
+        p_telefono TBL_PROVEEDOR.TELEFONO%TYPE,
+        p_fecha_de_registro TBL_PROVEEDOR.FECHA_DE_REGISTRO%TYPE
+    ) AS
+        v_count NUMBER;
+    BEGIN
+        SELECT COUNT(*)
+        INTO v_count
+        FROM TBL_PROVEEDOR
+        WHERE CEDULA_JURIDICA = p_cedula_juridica;
+
+        IF v_count > 0 THEN
+            UPDATE TBL_PROVEEDOR
+            SET NOMBRE = p_nombre,
+                DIRECCION = p_direccion,
+                TELEFONO = p_telefono,
+                FECHA_DE_REGISTRO = p_fecha_de_registro
+            WHERE CEDULA_JURIDICA = p_cedula_juridica;
+            COMMIT;
+            DBMS_OUTPUT.PUT_LINE('EL PROVEEDOR CON LA CEDULA ' || p_cedula_juridica || ' HA SIDO ACTUALIZADO.');
+        ELSE
+            DBMS_OUTPUT.PUT_LINE('EL PROVEEDOR CON LA CEDULA ' || p_cedula_juridica || ' NO FUE ENCONTRADO.');
+        END IF;
+    END sp_actualizar_proveedor;
+
+    -- Implementación del procedimiento para eliminar proveedor
+    PROCEDURE sp_eliminar_proveedor(
+        p_cedula_juridica TBL_PROVEEDOR.CEDULA_JURIDICA%TYPE
+    ) AS
+        v_count NUMBER;
+    BEGIN
+        SELECT COUNT(*)
+        INTO v_count
+        FROM TBL_PROVEEDOR
+        WHERE CEDULA_JURIDICA = p_cedula_juridica;
+
+        IF v_count > 0 THEN
+            DELETE FROM TBL_PROVEEDOR
+            WHERE CEDULA_JURIDICA = p_cedula_juridica;
+            COMMIT;
+            DBMS_OUTPUT.PUT_LINE('EL PROVEEDOR CON LA CEDULA ' || p_cedula_juridica || ' HA SIDO ELIMINADO.');
+        ELSE
+            DBMS_OUTPUT.PUT_LINE('EL PROVEEDOR CON LA CEDULA ' || p_cedula_juridica || ' NO FUE ENCONTRADO.');
+        END IF;
+    END sp_eliminar_proveedor;
+
+    -- Implementación del procedimiento para leer proveedor por cédula jurídica
+    PROCEDURE sp_leer_proveedores(
+        p_cedula_juridica TBL_PROVEEDOR.CEDULA_JURIDICA%TYPE
+    ) IS
+        v_cedula_juridica TBL_PROVEEDOR.CEDULA_JURIDICA%TYPE;
+        v_nombre TBL_PROVEEDOR.NOMBRE%TYPE;
+        v_direccion TBL_PROVEEDOR.DIRECCION%TYPE;
+        v_telefono TBL_PROVEEDOR.TELEFONO%TYPE;
+        v_fecha_de_registro TBL_PROVEEDOR.FECHA_DE_REGISTRO%TYPE;
+    BEGIN
+        SELECT CEDULA_JURIDICA, NOMBRE, DIRECCION, TELEFONO, FECHA_DE_REGISTRO
+        INTO v_cedula_juridica, v_nombre, v_direccion, v_telefono, v_fecha_de_registro
+        FROM TBL_PROVEEDOR
+        WHERE CEDULA_JURIDICA = p_cedula_juridica;
+
+        DBMS_OUTPUT.PUT_LINE('CEDULA JURIDICA: ' || v_cedula_juridica || 
+                             ', NOMBRE: ' || v_nombre || 
+                             ', DIRECCION: ' || v_direccion || 
+                             ', TELEFONO: ' || v_telefono || 
+                             ', FECHA DE REGISTRO: ' || v_fecha_de_registro);
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            DBMS_OUTPUT.PUT_LINE('EL PROVEEDOR CON LA CEDULA ' || p_cedula_juridica || ' NO FUE ENCONTRADO.');
+    END sp_leer_proveedores;
+
+END pkg_proveedor_utilidades;
 /
 
--- SP para eliminar un registro en la tabla proveedor
-CREATE OR REPLACE PROCEDURE SP_ELIMINAR_PROVEEDOR(
-P_CEDULA_JURIDICA TBL_PROVEEDOR.CEDULA_JURIDICA%TYPE
-) AS
- V_COUNT NUMBER;
-BEGIN
-    SELECT COUNT(*)
-    INTO V_COUNT
-    FROM TBL_PROVEEDOR
-    WHERE CEDULA_JURIDICA = P_CEDULA_JURIDICA;
 
-    IF V_COUNT > 0 THEN
-        DELETE  FROM TBL_PROVEEDOR
-        WHERE CEDULA_JURIDICA = P_CEDULA_JURIDICA;
-        COMMIT;
-        DBMS_OUTPUT.PUT_LINE('EL PROVEEDOR CON LA CEDULA ' || P_CEDULA_JURIDICA || ' HA SIDO BORRADO.');
-    ELSE 
-        DBMS_OUTPUT.PUT_LINE('EL PROVEEDOR CON LA CEDULA' || P_CEDULA_JURIDICA || ' NO FUE ENCONTRADO.');
-    END IF;
-END;
-/
 
--- SP para leer datos de proveedor segun cedula juridica
-CREATE OR REPLACE PROCEDURE SP_LEER_PROVEEDORES(
-    P_CEDULA_JURIDICA NUMBER
-)IS
-    V_CEDULA_JURIDICA TBL_PROVEEDOR.CEDULA_JURIDICA%TYPE;
-    V_NOMBRE TBL_PROVEEDOR.NOMBRE%TYPE;
-    V_DIRECCION TBL_PROVEEDOR.DIRECCION%TYPE;
-    V_TELEFONO TBL_PROVEEDOR.TELEFONO%TYPE;
-    V_FECHA_DE_INGRESO TBL_PROVEEDOR.FECHA_DE_REGISTRO%TYPE;
-BEGIN    
-    SELECT CEDULA_JURIDICA, NOMBRE, DIRECCION, TELEFONO, FECHA_DE_REGISTRO INTO V_CEDULA_JURIDICA, V_NOMBRE, V_DIRECCION, V_TELEFONO, V_FECHA_DE_INGRESO
-    FROM TBL_PROVEEDOR
-    WHERE CEDULA_JURIDICA = P_CEDULA_JURIDICA;    
-    DBMS_OUTPUT.PUT_LINE('CEDULA JURIDICA: ' || V_CEDULA_JURIDICA || ', NOMBRE: ' || V_NOMBRE || ', DIRECCION: ' || V_DIRECCION || ', TELEFONO: ' || V_TELEFONO || ', FECHA_DE_INGRESO: ' || V_FECHA_DE_INGRESO);
-EXCEPTION
-    WHEN NO_DATA_FOUND THEN
-    DBMS_OUTPUT.PUT_LINE('EL PROVEEDOR CON EL ID ' || V_CEDULA_JURIDICA || ' NO FUE ENCONTRADO.');
-END;
-/
+
 
 -- Inicia bloque de funciones
 
@@ -133,7 +179,7 @@ CREATE OR REPLACE TYPE TIPO_RESULTADO_PROVEEDOR FORCE AS OBJECT (
 );
 /
 
--- Crear el tipo de tabla para el objeto, esto permitir� manejar multiples resultados en la funci�n de busqueda
+-- Crear el tipo de tabla para el objeto, esto permitirá manejar multiples resultados en la función de busqueda
 CREATE OR REPLACE TYPE TABLA_RESULTADOS_PARA_PROVEEDOR AS TABLE OF TIPO_RESULTADO_PROVEEDOR;
 /
 
@@ -163,22 +209,16 @@ EXCEPTION
 END;
 /
 
--- Busca un proveedor segun nombre
-
 
 -- Insertar registros en la tabla de proveedores
+EXEC pkg_proveedor_utilidades.SP_INSERTAR_PROVEEDOR(101234567, 'Proveedor Uno', 'Direccion 1', 22223333, TO_DATE('15-01-2020', 'DD-MM-YYYY'));
+EXEC pkg_proveedor_utilidades.SP_INSERTAR_PROVEEDOR(102345678, 'Proveedor Dos', 'Direccion 2', 22224444, TO_DATE('20-02-2023', 'DD-MM-YYYY'));
+EXEC pkg_proveedor_utilidades.SP_INSERTAR_PROVEEDOR(103456789, 'Proveedor Tres', 'Direccion 3', 22225555, TO_DATE('25-03-2015', 'DD-MM-YYYY'));
+EXEC pkg_proveedor_utilidades.SP_INSERTAR_PROVEEDOR(104567890, 'Proveedor Cuatro', 'Direccion 4', 22226666, TO_DATE('30-04-2017', 'DD-MM-YYYY'));
+EXEC pkg_proveedor_utilidades.SP_INSERTAR_PROVEEDOR(105678901, 'Proveedor Cinco', 'Direccion 5', 22227777, TO_DATE('10-05-2023', 'DD-MM-YYYY'));
 
-EXEC SP_INSERTAR_PROVEEDOR(101234567, 'Proveedor Uno', 'Direccion 1', 22223333, TO_DATE('15-01-2020', 'DD-MM-YYYY'));
-
-EXEC SP_INSERTAR_PROVEEDOR(102345678, 'Proveedor Dos', 'Direccion 2', 22224444, TO_DATE('20-02-2023', 'DD-MM-YYYY'));
-
-EXEC SP_INSERTAR_PROVEEDOR(103456789, 'Proveedor Tres', 'Direccion 3', 22225555, TO_DATE('25-03-2015', 'DD-MM-YYYY'));
-
-EXEC SP_INSERTAR_PROVEEDOR(104567890, 'Proveedor Cuatro', 'Direccion 4', 22226666, TO_DATE('30-04-2017', 'DD-MM-YYYY'));
-
-EXEC SP_INSERTAR_PROVEEDOR(105678901, 'Proveedor Cinco', 'Direccion 5', 22227777, TO_DATE('10-05-2023', 'DD-MM-YYYY'));
-
-SELECT * FROM TBL_PROVEEDOR WHERE FECHA_DE_REGISTRO BETWEEN TO_DATE('01-01-15', 'DD-MM-YY') AND TO_DATE(SYSDATE, 'DD-MM-YY');
-
--- Llamada a la funci�n
+-- Llamada a la función
 SELECT NOMBRE, FECHA_DE_REGISTRO FROM TABLE(consultar_proveedor_por_fecha_de_registro(TO_DATE('20-01-21', 'DD-MM-YY')));
+
+
+
