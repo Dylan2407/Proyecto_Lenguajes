@@ -24,85 +24,112 @@ CREATE TABLE TBL_DISTRITO(
     REFERENCES TBL_CANTON(ID_CANTON)
 );
 
--- SP para insertar datos en tabla TBL_DISTRITO
-CREATE OR REPLACE PROCEDURE SP_INSERTAR_DISTRITO (
-    P_ID_DISTRITO TBL_DISTRITO.ID_DISTRITO%TYPE,
-    P_NOMBRE_DISTRITO TBL_DISTRITO.NOMBRE_DISTRITO%TYPE,
-    P_ID_CANTON TBL_DISTRITO.ID_CANTON%TYPE
-) AS
-    V_COUNT NUMBER;
-BEGIN
-    SELECT COUNT(*)
-    INTO V_COUNT
-    FROM TBL_DISTRITO
-    WHERE ID_DISTRITO = P_ID_DISTRITO;
+CREATE OR REPLACE PACKAGE pkg_distrito_utilidades AS
+    -- Declaración de los procedimientos
+    PROCEDURE sp_insertar_distrito(
+        p_id_distrito TBL_DISTRITO.ID_DISTRITO%TYPE,
+        p_nombre_distrito TBL_DISTRITO.NOMBRE_DISTRITO%TYPE,
+        p_id_canton TBL_DISTRITO.ID_CANTON%TYPE
+    );
 
-    IF V_COUNT > 0 THEN
-        DBMS_OUTPUT.PUT_LINE('YA EXISTE UN REGISTRO CON EL ID ' || P_ID_CANTON);
-    ELSE
-        INSERT INTO TBL_DISTRITO (ID_DISTRITO, NOMBRE_DISTRITO, ID_CANTON)
-        VALUES (P_ID_DISTRITO, P_NOMBRE_DISTRITO, P_ID_DISTRITO);
+    PROCEDURE sp_actualizar_distrito(
+        p_id_distrito IN TBL_DISTRITO.ID_DISTRITO%TYPE,
+        p_nuevo_nombre_distrito IN TBL_DISTRITO.NOMBRE_DISTRITO%TYPE
+    );
+
+    PROCEDURE sp_eliminar_distrito(
+        p_id_distrito IN TBL_DISTRITO.ID_DISTRITO%TYPE
+    );
+
+    PROCEDURE sp_leer_distrito(
+        p_id_distrito NUMBER
+    );
+END pkg_distrito_utilidades;
+/
+
+-- Cuerpo del Paquete
+CREATE OR REPLACE PACKAGE BODY pkg_distrito_utilidades AS
+
+    -- Implementación del procedimiento para insertar distritos
+    PROCEDURE sp_insertar_distrito (
+        p_id_distrito TBL_DISTRITO.ID_DISTRITO%TYPE,
+        p_nombre_distrito TBL_DISTRITO.NOMBRE_DISTRITO%TYPE,
+        p_id_canton TBL_DISTRITO.ID_CANTON%TYPE
+    ) AS
+        v_count NUMBER;
+    BEGIN
+        SELECT COUNT(*)
+        INTO v_count
+        FROM TBL_DISTRITO
+        WHERE ID_DISTRITO = p_id_distrito;
+
+        IF v_count > 0 THEN
+            DBMS_OUTPUT.PUT_LINE('YA EXISTE UN REGISTRO CON EL ID ' || p_id_canton);
+        ELSE
+            INSERT INTO TBL_DISTRITO (ID_DISTRITO, NOMBRE_DISTRITO, ID_CANTON)
+            VALUES (p_id_distrito, p_nombre_distrito, p_id_canton);
+            COMMIT;
+            DBMS_OUTPUT.PUT_LINE('REGISTRO REALIZADO');
+        END IF;
+    END sp_insertar_distrito;
+
+    -- Implementación del procedimiento para actualizar distritos
+    PROCEDURE sp_actualizar_distrito (
+        p_id_distrito IN TBL_DISTRITO.ID_DISTRITO%TYPE,
+        p_nuevo_nombre_distrito IN TBL_DISTRITO.NOMBRE_DISTRITO%TYPE
+    ) IS
+    BEGIN
+        UPDATE TBL_DISTRITO
+        SET NOMBRE_DISTRITO = p_nuevo_nombre_distrito
+        WHERE ID_DISTRITO = p_id_distrito;
+
         COMMIT;
-        DBMS_OUTPUT.PUT_LINE('REGISTRO REALIZADO');
-    END IF;
-END;
+        DBMS_OUTPUT.PUT_LINE('Registro actualizado exitosamente');
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            DBMS_OUTPUT.PUT_LINE('No se encontró un registro con el ID ' || p_id_distrito);
+        WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('Error al procesar la operación');
+    END sp_actualizar_distrito;
+
+    -- Implementación del procedimiento para eliminar distritos
+    PROCEDURE sp_eliminar_distrito (
+        p_id_distrito IN TBL_DISTRITO.ID_DISTRITO%TYPE
+    ) IS
+    BEGIN
+        DELETE FROM TBL_DISTRITO
+        WHERE ID_DISTRITO = p_id_distrito;
+
+        COMMIT;
+        DBMS_OUTPUT.PUT_LINE('Registro eliminado exitosamente');
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            DBMS_OUTPUT.PUT_LINE('No se encontró un registro con el ID ' || p_id_distrito);
+        WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('Error al procesar la operación');
+    END sp_eliminar_distrito;
+
+    -- Implementación del procedimiento para leer distritos
+    PROCEDURE sp_leer_distrito(
+        p_id_distrito NUMBER
+    ) IS
+        v_id_distrito TBL_DISTRITO.ID_DISTRITO%TYPE;
+        v_nombre_distrito TBL_DISTRITO.NOMBRE_DISTRITO%TYPE;
+    BEGIN    
+        SELECT ID_DISTRITO, NOMBRE_DISTRITO INTO v_id_distrito, v_nombre_distrito
+        FROM TBL_DISTRITO
+        WHERE ID_DISTRITO = p_id_distrito;
+        
+        DBMS_OUTPUT.PUT_LINE('ID DEL DISTRITO: ' || v_id_distrito || ', EL NOMBRE DEL DISTRITO ES: ' || v_nombre_distrito);
+        
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            DBMS_OUTPUT.PUT_LINE('EL DISTRITO CON EL ID ' || p_id_distrito || ' NO FUE ENCONTRADO.');
+    END sp_leer_distrito;
+
+END pkg_distrito_utilidades;
 /
 
-CREATE OR REPLACE PROCEDURE SP_ACTUALIZAR_DISTRITO (
-    P_ID_DISTRITO IN TBL_DISTRITO.ID_DISTRITO%TYPE,
-    P_NUEVO_NOMBRE_DISTRITO IN TBL_DISTRITO.NOMBRE_DISTRITO%TYPE
-) IS
-BEGIN
-    UPDATE TBL_DISTRITO
-    SET NOMBRE_DISTRITO = P_NUEVO_NOMBRE_DISTRITO
-    WHERE ID_DISTRITO = P_ID_DISTRITO;
-
-    COMMIT;
-    DBMS_OUTPUT.PUT_LINE('Registro actualizado exitosamente');
-EXCEPTION
-    WHEN NO_DATA_FOUND THEN
-        DBMS_OUTPUT.PUT_LINE('No se encontró un registro con el ID ' || P_ID_DISTRITO);
-    WHEN OTHERS THEN
-        DBMS_OUTPUT.PUT_LINE('Error al procesar la operación');
-END SP_ACTUALIZAR_DISTRITO;
-/
-
--- SP para eliminar datos en tabla TBL_DISTRITO
-CREATE OR REPLACE PROCEDURE SP_ELIMINAR_DISTRITO (
-    P_ID_DISTRITO IN TBL_DISTRITO.ID_DISTRITO%TYPE
-) IS
-BEGIN
-    DELETE FROM TBL_DISTRITO
-    WHERE ID_CANTON = P_ID_DISTRITO;
-
-    COMMIT;
-    DBMS_OUTPUT.PUT_LINE('Registro eliminado exitosamente');
-EXCEPTION
-    WHEN NO_DATA_FOUND THEN
-        DBMS_OUTPUT.PUT_LINE('No se encontró un registro con el ID ' || P_ID_DISTRITO);
-    WHEN OTHERS THEN
-        DBMS_OUTPUT.PUT_LINE('Error al procesar la operación');
-END SP_ELIMINAR_DISTRITO;
-/
-
--- SP para leer datos en tabla TBL_DISTRITO
-CREATE OR REPLACE PROCEDURE SP_LEER_DISTRITO(
-    P_ID_DISTRITO NUMBER
-)IS
-    V_ID_DISTRITO TBL_DISTRITO.ID_DISTRITO%TYPE;
-    V_NOMBRE_DISTRITO TBL_DISTRITO.NOMBRE_DISTRITO%TYPE;
-BEGIN    
-    SELECT ID_DISTRITO, NOMBRE_DISTRITO INTO V_ID_DISTRITO, V_NOMBRE_DISTRITO
-    FROM TBL_DISTRITO
-    WHERE ID_DISTRITO = P_ID_DISTRITO;
-    
-    DBMS_OUTPUT.PUT_LINE('ID DEL DISTRITO: ' || V_ID_DISTRITO || ', EL NOMBRE DEL DISTRITO ES: ' || V_NOMBRE_DISTRITO);
-    
-EXCEPTION
-    WHEN NO_DATA_FOUND THEN
-    DBMS_OUTPUT.PUT_LINE('EL DISTRITO CON EL ID ' || P_ID_DISTRITO || ' NO FUE ENCONTRADO.');
-END;
-/
 
 --CURSOR PARA LISTAR LOS DISTRITOS EN UN RANGO SEGUN SU ID
 DECLARE
@@ -144,57 +171,78 @@ CREATE OR REPLACE TYPE TIPO_RESULTADO AS OBJECT (
 CREATE OR REPLACE TYPE TABLA_RESULTADOS AS TABLE OF TIPO_RESULTADO;
 /
 
--- Crear la función que devuelve la tabla de objetos basado en el nombre del distrito. Consulta Canton al que pertenece un Distrito.
-CREATE OR REPLACE FUNCTION CONSULTAR_DISTRITO_POR_NOMBRE(NOMBRE_DISTRITO_IN VARCHAR2)
-RETURN TABLA_RESULTADOS PIPELINED
-IS
-    v_found BOOLEAN := FALSE;
-BEGIN
-    FOR R IN (
-        SELECT D.NOMBRE_DISTRITO, C.NOMBRE_CANTON
-        FROM TBL_DISTRITO D 
-        INNER JOIN TBL_CANTON C ON D.ID_CANTON = C.ID_CANTON
-        WHERE REGEXP_LIKE(D.NOMBRE_DISTRITO, NOMBRE_DISTRITO_IN, 'i')
-    ) LOOP
-        PIPE ROW(TIPO_RESULTADO(R.NOMBRE_DISTRITO, R.NOMBRE_CANTON));
-        v_found := TRUE;
-    END LOOP;
-    IF NOT v_found THEN
-        PIPE ROW(TIPO_RESULTADO('DISTRITO NO ENCONTRADO', 'NO SE PUEDE BUSCAR CANTON SIN DISTRITO'));
-    END IF;
+CREATE OR REPLACE PACKAGE pkg_distrito AS
+    TYPE tipo_resultado IS RECORD (
+        nombre_distrito VARCHAR2(100),
+        nombre_canton VARCHAR2(100)
+    );
+    
+    TYPE tabla_resultados IS TABLE OF tipo_resultado;
 
-    RETURN;
-EXCEPTION
-    WHEN OTHERS THEN
-        PIPE ROW(TIPO_RESULTADO('ERROR AL CONSULTAR EL DISTRITO', 'ERROR AL CONSULTAR EL CANTON'));
+    FUNCTION consultar_distrito_por_nombre(
+        nombre_distrito_in VARCHAR2
+    ) RETURN tabla_resultados PIPELINED;
+
+    FUNCTION consultar_distrito_con_id(
+        id_distrito_in NUMBER
+    ) RETURN VARCHAR2;
+END pkg_distrito;
+/
+
+CREATE OR REPLACE PACKAGE BODY pkg_distrito AS
+
+    FUNCTION consultar_distrito_por_nombre(
+        nombre_distrito_in VARCHAR2
+    ) RETURN tabla_resultados PIPELINED
+    IS
+        v_found BOOLEAN := FALSE;
+    BEGIN
+        FOR R IN (
+            SELECT D.NOMBRE_DISTRITO, C.NOMBRE_CANTON
+            FROM TBL_DISTRITO D 
+            INNER JOIN TBL_CANTON C ON D.ID_CANTON = C.ID_CANTON
+            WHERE REGEXP_LIKE(D.NOMBRE_DISTRITO, nombre_distrito_in, 'i')
+        ) LOOP
+            PIPE ROW(tipo_resultado(R.NOMBRE_DISTRITO, R.NOMBRE_CANTON));
+            v_found := TRUE;
+        END LOOP;
+
+        IF NOT v_found THEN
+            PIPE ROW(tipo_resultado('DISTRITO NO ENCONTRADO', 'NO SE PUEDE BUSCAR CANTON SIN DISTRITO'));
+        END IF;
+
         RETURN;
-END;
+    EXCEPTION
+        WHEN OTHERS THEN
+            PIPE ROW(tipo_resultado('ERROR AL CONSULTAR EL DISTRITO', 'ERROR AL CONSULTAR EL CANTON'));
+            RETURN;
+    END;
+
+    FUNCTION consultar_distrito_con_id(
+        id_distrito_in NUMBER
+    ) RETURN VARCHAR2
+    IS
+        id_distrito TBL_DISTRITO.ID_DISTRITO%TYPE;
+        nombre_distrito TBL_DISTRITO.NOMBRE_DISTRITO%TYPE;
+    BEGIN
+        -- Buscar el nombre del distrito en la tabla TBL_DISTRITO
+        SELECT D.ID_DISTRITO, D.NOMBRE_DISTRITO
+        INTO id_distrito, nombre_distrito
+        FROM TBL_DISTRITO D
+        WHERE D.ID_DISTRITO = id_distrito_in;
+
+        -- Retornar el resultado
+        RETURN 'EL DISTRITO CON ID: ' || id_distrito || ' SE LLAMA: ' || nombre_distrito;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            RETURN 'EL DISTRITO CON ID: ' || id_distrito_in || ' NO FUE ENCONTRADO';
+        WHEN OTHERS THEN
+            RETURN 'ERROR AL CONSULTAR EL DISTRITO';
+    END;
+
+END pkg_distrito;
 /
 
--- **Termina bloque de código para buscar canton al que pertenece distrito**
-
---Busqueda de distrito por id
-CREATE OR REPLACE FUNCTION CONSULTAR_DISTRITO_CON_ID(ID_DISTRITO_IN NUMBER)
-RETURN VARCHAR2
-IS
-    ID_DISTRITO TBL_DISTRITO.ID_DISTRITO%TYPE;
-    NOMBRE_DISTRITO TBL_DISTRITO.NOMBRE_DISTRITO%TYPE;
-BEGIN
-    -- Buscar el nombre del distrito en la tabla TBL_DISTRITO
-    SELECT D.ID_DISTRITO, D.NOMBRE_DISTRITO
-    INTO ID_DISTRITO, NOMBRE_DISTRITO
-    FROM TBL_DISTRITO D
-    WHERE ID_DISTRITO = ID_DISTRITO_IN;
-
-    -- Retornar el resultado
-    RETURN 'EL DISTRITO CON ID: ' || ID_DISTRITO || ' SE LLAMA: ' || NOMBRE_DISTRITO;
-EXCEPTION
-    WHEN NO_DATA_FOUND THEN
-        RETURN 'EL DISTRITO CON ID: ' || ID_DISTRITO || ' NO FUE ENCONTRADO';
-    WHEN OTHERS THEN
-        RETURN 'ERROR AL CONSULTAR EL DISTRITO';
-END;
-/
 
 --VISTA PARA LISTAR TODOS LOS DISTRITO Y SUS RESPECTIVOS CANTONES
 CREATE OR REPLACE VIEW VISTA_LISTAR_DISTRITO AS 
@@ -1684,14 +1732,12 @@ VALUES (706, 70604, 'Río Jiménez');
 INSERT INTO TBL_DISTRITO (ID_CANTON, ID_DISTRITO, NOMBRE_DISTRITO) 
 VALUES (706, 70605, 'Duacarí');
 
+-- Llamando a la función
+SELECT pkg_distrito.consultar_distrito_con_id(10101) AS resultado FROM DUAL;
+SELECT pkg_distrito.consultar_distrito_con_id(10105) AS resultado FROM DUAL;
+
+
 --Llamando las vistas Distrito
 Select "NUMERO DE DISTRITOS" from VISTA_CANTIDAD_DE_DISTRITOS;
 Select "NOMBRE DEL DISTRITO", "NUMERO DE CANTON", "NOMBRE DEL CANTON", "PERTENECE A LA PROVINCIA DE" from VISTA_LISTAR_DISTRITO_Y_PROVINCIA;
 Select "NOMBRE DEL DISTRITO", "NOMBRE DEL CANTON" from VISTA_LISTAR_DISTRITO;
-
---Llamando funciones de Distrito
-SELECT CONSULTAR_DISTRITO_CON_ID(10101) FROM DUAL;
-SELECT CONSULTAR_DISTRITO_CON_ID(10105) FROM DUAL;
-
-SELECT * FROM TABLE(CONSULTAR_DISTRITO_POR_NOMBRE('san josecito'));
-SELECT * FROM TABLE(CONSULTAR_DISTRITO_POR_NOMBRE('uruca'));
