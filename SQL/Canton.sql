@@ -1,12 +1,45 @@
 -- Verifica que no exista la tabla
 DECLARE
-    tabla VARCHAR2(15) := 'TBL_CANTON';
+    tabla1 VARCHAR2(15) := 'TBL_CANTON';
+    tabla2 VARCHAR2(20) := 'TBL_CANTON_AUDIT';
+    secuencia varchar(15) := 'SEQ_AUDIT_ID';
 BEGIN
-  EXECUTE IMMEDIATE 'DROP TABLE ' || tabla;
-  DBMS_OUTPUT.PUT_LINE('LA TABLA ' || tabla || ' FUE ENCONTRADA Y ELIMINADA EXITOSAMENTE');
-EXCEPTION
-  WHEN OTHERS THEN
-    DBMS_OUTPUT.PUT_LINE('LA TABLA ' || tabla || ' NO EXISTE');
+    -- Intentar eliminar ambas tablas
+    BEGIN
+        EXECUTE IMMEDIATE 'DROP TABLE ' || tabla1 || ' CASCADE CONSTRAINTS';
+        DBMS_OUTPUT.PUT_LINE('LA TABLA ' || tabla1 || ' FUE ENCONTRADA Y ELIMINADA EXITOSAMENTE');
+    EXCEPTION
+        WHEN OTHERS THEN
+            IF SQLCODE = -942 THEN  -- ORA-00942: table or view does not exist
+                DBMS_OUTPUT.PUT_LINE('ERROR: LA TABLA ' || tabla1 || ' NO EXISTE.');
+            ELSE
+                DBMS_OUTPUT.PUT_LINE('ERROR AL ELIMINAR LA TABLA ' || tabla1 || ': ' || SQLERRM);
+            END IF;
+    END;
+
+    BEGIN
+        EXECUTE IMMEDIATE 'DROP TABLE ' || tabla2;
+        DBMS_OUTPUT.PUT_LINE('LA TABLA ' || tabla2 || ' FUE ENCONTRADA Y ELIMINADA EXITOSAMENTE');
+    EXCEPTION
+        WHEN OTHERS THEN
+            IF SQLCODE = -942 THEN  -- ORA-00942: table or view does not exist
+                DBMS_OUTPUT.PUT_LINE('ERROR: LA TABLA ' || tabla2 || ' NO EXISTE.');
+            ELSE
+                DBMS_OUTPUT.PUT_LINE('ERROR AL ELIMINAR LA TABLA ' || tabla2 || ': ' || SQLERRM);
+            END IF;
+    END;
+    
+    BEGIN
+        EXECUTE IMMEDIATE 'DROP SEQUENCE ' || SECUENCIA;
+        DBMS_OUTPUT.PUT_LINE('LA SECUENCIA ' || SECUENCIA || ' FUE ENCONTRADA Y ELIMINADA EXITOSAMENTE');
+    EXCEPTION
+        WHEN OTHERS THEN
+            IF SQLCODE = -942 THEN  -- ORA-00942: table or view does not exist
+                DBMS_OUTPUT.PUT_LINE('ERROR: LA SECUENCIA ' || SECUENCIA || ' NO EXISTE.');
+            ELSE
+                DBMS_OUTPUT.PUT_LINE('ERROR AL ELIMINAR LA SECUENCIA ' || SECUENCIA || ': ' || SQLERRM);
+            END IF;
+    END;
 END;
 /
 
@@ -15,10 +48,92 @@ CREATE TABLE TBL_CANTON(
     ID_CANTON NUMBER NOT NULL PRIMARY KEY,
     NOMBRE_CANTON VARCHAR2(50) NOT NULL,
     ID_PROVINCIA NUMBER,
+    OPERATION_TYPE VARCHAR2(10),
     CONSTRAINT FK_CANTON_PROVINCIA
     FOREIGN KEY (ID_PROVINCIA)
     REFERENCES TBL_PROVINCIA(ID_PROVINCIA)
 );
+
+-- Tabla para auditar los registros
+CREATE TABLE TBL_CANTON_AUDIT (
+    ID_AUDIT NUMBER PRIMARY KEY,
+    ID_CANTON NUMBER,
+    NOMBRE_CANTON VARCHAR2(50),
+    ID_PROVINCIA NUMBER,
+    INSERT_DATE TIMESTAMP,
+    OPERATION_TYPE VARCHAR2(10)    
+);
+
+--Sequencia para tabla audit
+CREATE SEQUENCE SEQ_AUDIT_ID
+START WITH 1
+INCREMENT BY 1
+NOCACHE
+NOCYCLE;
+
+-- Creando un paquete para manejar variable global
+CREATE OR REPLACE PACKAGE canton_pkg AS
+    g_allow_update BOOLEAN := FALSE;
+    g_allow_delete BOOLEAN := FALSE;
+END canton_pkg;
+/
+
+// Inicia triggers
+
+-- Trigger insercion
+CREATE OR REPLACE TRIGGER trg_audit_insert_canton
+AFTER INSERT ON TBL_CANTON
+FOR EACH ROW
+BEGIN
+    -- Insertar un registro en la tabla de auditoría
+    INSERT INTO TBL_CANTON_AUDIT (ID_AUDIT, ID_CANTON, NOMBRE_CANTON, ID_PROVINCIA, INSERT_DATE, OPERATION_TYPE)
+    VALUES (SEQ_AUDIT_ID.NEXTVAL, :NEW.ID_CANTON, :NEW.NOMBRE_CANTON, :NEW.ID_PROVINCIA, SYSTIMESTAMP, 'INSERT');
+END;
+/
+
+-- Trigger para actualizar
+CREATE OR REPLACE TRIGGER trg_prevent_direct_update
+BEFORE UPDATE ON TBL_CANTON
+BEGIN
+    -- Verificar si se permite la actualización
+    IF NOT canton_pkg.g_allow_update THEN
+        RAISE_APPLICATION_ERROR(-20002, 'Operaciones de actualizacion directas no estan permitidas. Use el procedimiento para actualizar registros.');
+    END IF;
+END;
+/
+
+-- Trigger que registra operacion de actualzacion en tabla de auditoria
+CREATE OR REPLACE TRIGGER trg_audit_update_canton
+AFTER UPDATE ON TBL_CANTON
+FOR EACH ROW
+BEGIN
+    -- Insertar un registro en la tabla de auditoría con detalles de la actualización
+    INSERT INTO TBL_CANTON_AUDIT (ID_AUDIT, ID_CANTON, NOMBRE_CANTON, ID_PROVINCIA, INSERT_DATE, OPERATION_TYPE)
+    VALUES (SEQ_AUDIT_ID.NEXTVAL, :OLD.ID_CANTON, :OLD.NOMBRE_CANTON, :OLD.ID_PROVINCIA, SYSTIMESTAMP, 'UPDATE');
+END;
+/
+
+-- Trigger para borrado
+CREATE OR REPLACE TRIGGER trg_prevent_direct_delete
+BEFORE DELETE ON TBL_CANTON
+BEGIN
+    -- Verificar si se permite la borrado
+    IF NOT canton_pkg.g_allow_delete THEN
+    RAISE_APPLICATION_ERROR(-20001, 'Operaciones de borrado directas no estan permitidas. Use el procedimiento para eliminar registros.');
+END IF;
+END;
+/
+
+-- Trigger que registra operacion de borrado en tabla de auditoria
+CREATE OR REPLACE TRIGGER trg_audit_delete_canton
+AFTER DELETE ON TBL_CANTON
+FOR EACH ROW
+BEGIN
+    -- Insertar un registro en la tabla de auditoría con detalles de la eliminación
+    INSERT INTO TBL_CANTON_AUDIT (ID_AUDIT, ID_CANTON, NOMBRE_CANTON, ID_PROVINCIA, INSERT_DATE, OPERATION_TYPE)
+    VALUES (SEQ_AUDIT_ID.NEXTVAL, :OLD.ID_CANTON, :OLD.NOMBRE_CANTON, :OLD.ID_PROVINCIA, SYSTIMESTAMP, 'DELETE');
+END;
+/
 
 -- SP para insertar datos en tabla TBL_CANTON
 CREATE OR REPLACE PROCEDURE SP_INSERTAR_CANTON (
@@ -45,41 +160,56 @@ END;
 /
 
 -- SP para actualizar datos en tabla TBL_CANTON
-CREATE OR REPLACE PROCEDURE SP_ACTUALIZAR_CANTON (
+CREATE OR REPLACE PROCEDURE SP_ACTUALIZAR_CANTON(
     P_ID_CANTON IN TBL_CANTON.ID_CANTON%TYPE,
     P_NUEVO_NOMBRE_CANTON IN TBL_CANTON.NOMBRE_CANTON%TYPE
 ) IS
+    v_sql VARCHAR2(1000);
 BEGIN
-    UPDATE TBL_CANTON
-    SET NOMBRE_CANTON = P_NUEVO_NOMBRE_CANTON
-    WHERE ID_CANTON = P_ID_CANTON;
-
-    COMMIT;
-    DBMS_OUTPUT.PUT_LINE('Registro actualizado exitosamente');
+    -- Permitir la actualización al establecer la variable global
+    canton_pkg.g_allow_update := TRUE;
+    
+    -- Construir la consulta de actualización con las cláusulas SET y WHERE proporcionadas
+    v_sql := 'UPDATE TBL_CANTON SET NOMBRE_CANTON = ''' || P_NUEVO_NOMBRE_CANTON || ''' WHERE ID_CANTON = ' || P_ID_CANTON;
+    
+    -- Ejecutar la consulta dinámica
+    EXECUTE IMMEDIATE v_sql;
+    
+    -- Confirmar la actualización
+    DBMS_OUTPUT.PUT_LINE('Actualización realizada con nombre de canton cambiado a: ' || P_NUEVO_NOMBRE_CANTON || ' y id: ' || P_ID_CANTON);
+    
+    -- Restablecer la variable para bloquear futuras actualizaciones directas
+    canton_pkg.g_allow_update := FALSE;
 EXCEPTION
     WHEN NO_DATA_FOUND THEN
-        DBMS_OUTPUT.PUT_LINE('No se encontró un registro con el ID ' || P_ID_CANTON);
+        DBMS_OUTPUT.PUT_LINE('No se encontraron registros para actualizar con la condición proporcionada.');
     WHEN OTHERS THEN
-        DBMS_OUTPUT.PUT_LINE('Error al procesar la operación');
-END SP_ACTUALIZAR_CANTON;
+        -- Asegurarse de restablecer la variable incluso si hay un error
+        canton_pkg.g_allow_update := FALSE;
+        DBMS_OUTPUT.PUT_LINE('Error en la actualización: ' || SQLERRM);
+END;
 /
 
 -- SP para eliminar datos en tabla TBL_CANTON
-CREATE OR REPLACE PROCEDURE SP_ELIMINAR_CANTON (
-    P_ID_CANTON IN TBL_CANTON.ID_CANTON%TYPE
-) IS
+CREATE OR REPLACE PROCEDURE SP_ELIMINAR_CANTON(p_id_canton IN TBL_CANTON.ID_CANTON%TYPE) IS
+    v_sql VARCHAR2(1000);
 BEGIN
-    DELETE FROM TBL_CANTON
-    WHERE ID_CANTON = P_ID_CANTON;
-
-    COMMIT;
-    DBMS_OUTPUT.PUT_LINE('Registro eliminado exitosamente');
+    -- Permitir la actualización al establecer la variable global
+    canton_pkg.g_allow_delete := TRUE;
+    -- Construir la consulta de eliminación con la condición proporcionada
+    v_sql := 'DELETE FROM TBL_CANTON WHERE ID_CANTON=' || p_id_canton;
+    
+    -- Ejecutar la consulta dinámica
+    EXECUTE IMMEDIATE v_sql;
+    
+    -- Confirmar la eliminación
+    DBMS_OUTPUT.PUT_LINE('Eliminación realizada con condición: ' || p_id_canton);
 EXCEPTION
     WHEN NO_DATA_FOUND THEN
-        DBMS_OUTPUT.PUT_LINE('No se encontró un registro con el ID ' || P_ID_CANTON);
+        DBMS_OUTPUT.PUT_LINE('No se encontraron registros para eliminar con la condición proporcionada.');
     WHEN OTHERS THEN
-        DBMS_OUTPUT.PUT_LINE('Error al procesar la operación');
-END SP_ELIMINAR_CANTON;
+        DBMS_OUTPUT.PUT_LINE('Error en la eliminación: ' || SQLERRM);
+END;
 /
 
 -- SP para leer datos en tabla TBL_CANTON
@@ -310,13 +440,16 @@ INSERT INTO TBL_CANTON (ID_CANTON,ID_PROVINCIA,NOMBRE_CANTON) VALUES  (706,7,'Gu
 //EXEC sp_insertar_canton(101,'San José',1);
 //EXEC sp_actualizar_canton(101,'Cartago');
 //EXEC sp_eliminar_canton(101);
-//EXEC sp_leer_canton(101);
+//EXEC sp_leer_canton(1001);
+
+--Revisando tabla auditoria
+SELECT * FROM TBL_CANTON_AUDIT ORDER BY INSERT_DATE DESC;
 
 --Llamando la vista Canton
 SELECT "NUMERO DE CANTON", "NOMBRE DEL CANTON", "PERTENECE A LA PROVINCIA DE" FROM VISTA_LISTAR_CANTONES;
 SELECT "NUMERO DE CANTONES" FROM VISTA_CANTIDAD_DE_CANTONES;
 
 --Llamando funciones de Canton
-SELECT CONSULTAR_CANTON('MorAvIa') FROM DUAL;
-SELECT CONSULTAR_CANTON('SaN rAfAEl') FROM DUAL;
-SELECT CONSULTAR_CANTON_CON_ID(103) FROM DUAL;
+SELECT CONSULTAR_CANTON('MorAvIa') RESULTADO FROM DUAL;
+SELECT CONSULTAR_CANTON('SaN rAfAEl') RESULTADO FROM DUAL;
+SELECT CONSULTAR_CANTON_CON_ID(103) RESULTADO FROM DUAL;
