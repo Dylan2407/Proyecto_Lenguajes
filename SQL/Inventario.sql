@@ -24,106 +24,205 @@ CONSTRAINT FK_PRODUCTO_PROVEEDOR FOREIGN KEY (CEDULA_JURIDICA_PROVEEDOR) REFEREN
 CONSTRAINT UQ_CODIGO_BARRAS UNIQUE (CODIGO_BARRAS)
 );
 
--- SP para insertar productos
-CREATE OR REPLACE PROCEDURE SP_INSERTAR_PRODUCTO(
-P_ID_PRODUCTO TBL_INVENTARIO.ID_PRODUCTO%TYPE,
-P_CODIGO_BARRAS TBL_INVENTARIO.CODIGO_BARRAS%TYPE,
-P_NOMBRE_PRODUCTO TBL_INVENTARIO.NOMBRE_PRODUCTO%TYPE,
-P_CATEGORIA TBL_INVENTARIO.CATEGORIA%TYPE,
-P_COSTO TBL_INVENTARIO.COSTO%TYPE,
-P_CANTIDAD TBL_INVENTARIO.CANTIDAD%TYPE,
-P_CEDULA_JURIDICA_PROVEEDOR TBL_INVENTARIO.CEDULA_JURIDICA_PROVEEDOR%TYPE
-) AS
- V_COUNT NUMBER;
-BEGIN 
- SELECT COUNT(*)
- INTO V_COUNT
- FROM TBL_INVENTARIO
- WHERE ID_PRODUCTO = P_ID_PRODUCTO;
- 
- IF V_COUNT > 0 THEN
- DBMS_OUTPUT.PUT_LINE('YA EXISTE UN REGISTRO CON EL ID ' || P_ID_PRODUCTO);
- ELSE 
- INSERT INTO TBL_INVENTARIO(ID_PRODUCTO,CODIGO_BARRAS,NOMBRE_PRODUCTO,CATEGORIA,COSTO,CANTIDAD,CEDULA_JURIDICA_PROVEEDOR)
- VALUES(P_ID_PRODUCTO,P_CODIGO_BARRAS,P_NOMBRE_PRODUCTO,P_CATEGORIA,P_COSTO,P_CANTIDAD,P_CEDULA_JURIDICA_PROVEEDOR);
- COMMIT;
- DBMS_OUTPUT.PUT_LINE('REGISTRO REALIZADO');
- END IF;
-END;
+CREATE OR REPLACE PACKAGE pkg_inventario AS
+    -- Declaración de procedimientos
+    PROCEDURE sp_insertar_producto(
+        p_id_producto TBL_INVENTARIO.ID_PRODUCTO%TYPE,
+        p_codigo_barras TBL_INVENTARIO.CODIGO_BARRAS%TYPE,
+        p_nombre_producto TBL_INVENTARIO.NOMBRE_PRODUCTO%TYPE,
+        p_categoria TBL_INVENTARIO.CATEGORIA%TYPE,
+        p_costo TBL_INVENTARIO.COSTO%TYPE,
+        p_cantidad TBL_INVENTARIO.CANTIDAD%TYPE,
+        p_cedula_juridica_proveedor TBL_INVENTARIO.CEDULA_JURIDICA_PROVEEDOR%TYPE
+    );
+
+    PROCEDURE sp_leer_producto(
+        p_id_producto TBL_INVENTARIO.ID_PRODUCTO%TYPE
+    );
+
+    PROCEDURE sp_actualizar_producto(
+        p_id_producto TBL_INVENTARIO.ID_PRODUCTO%TYPE,
+        p_codigo_barras TBL_INVENTARIO.CODIGO_BARRAS%TYPE,
+        p_nombre_producto TBL_INVENTARIO.NOMBRE_PRODUCTO%TYPE,
+        p_categoria TBL_INVENTARIO.CATEGORIA%TYPE,
+        p_costo TBL_INVENTARIO.COSTO%TYPE,
+        p_cantidad TBL_INVENTARIO.CANTIDAD%TYPE,
+        p_cedula_juridica_proveedor TBL_INVENTARIO.CEDULA_JURIDICA_PROVEEDOR%TYPE
+    );
+
+    PROCEDURE sp_eliminar_producto(
+        p_codigo_barras TBL_INVENTARIO.CODIGO_BARRAS%TYPE
+    );
+
+    PROCEDURE sp_listar_productos;
+
+    PROCEDURE sp_buscar_productos_por_categoria(
+        p_categoria TBL_INVENTARIO.CATEGORIA%TYPE
+    );
+END pkg_inventario;
 /
 
--- SP para actualizar productos
-CREATE OR REPLACE PROCEDURE SP_ACTUALIZAR_PRODUCTO(
-P_ID_PRODUCTO TBL_INVENTARIO.ID_PRODUCTO%TYPE,
-P_CODIGO_BARRAS TBL_INVENTARIO.CODIGO_BARRAS%TYPE,
-P_NOMBRE_PRODUCTO TBL_INVENTARIO.NOMBRE_PRODUCTO%TYPE,
-P_CATEGORIA TBL_INVENTARIO.CATEGORIA%TYPE,
-P_COSTO TBL_INVENTARIO.COSTO%TYPE,
-P_CANTIDAD TBL_INVENTARIO.CANTIDAD%TYPE,
-P_ID_PROVEEDOR TBL_INVENTARIO.ID_PROVEEDOR%TYPE
-) AS
- V_COUNT NUMBER;
-BEGIN 
- SELECT COUNT(*)
- INTO V_COUNT
- FROM TBL_INVENTARIO
- WHERE ID_PRODUCTO = P_ID_PRODUCTO;
- 
- IF V_COUNT > 0 THEN
- UPDATE TBL_INVENTARIO
- SET CODIGO_BARRAS = P_CODIGO_BARRAS,NOMBRE_PRODUCTO =P_NOMBRE_PRODUCTO, CATEGORIA =P_CATEGORIA, COSTO = P_COSTO, CANTIDAD = P_CANTIDAD, ID_PROVEEDOR = P_ID_PROVEEDOR
- WHERE ID_PRODUCTO = P_ID_PRODUCTO;
- COMMIT;
- DBMS_OUTPUT.PUT_LINE('REGISTRO ACTUALIZADO');
- ELSE 
- DBMS_OUTPUT.PUT_LINE('NO EXISTE PRODUCTO CON EL ID' || P_ID_PRODUCTO);
- END IF;
-END;
+CREATE OR REPLACE PACKAGE BODY pkg_inventario AS
+    PROCEDURE sp_insertar_producto(
+        p_id_producto TBL_INVENTARIO.ID_PRODUCTO%TYPE,
+        p_codigo_barras TBL_INVENTARIO.CODIGO_BARRAS%TYPE,
+        p_nombre_producto TBL_INVENTARIO.NOMBRE_PRODUCTO%TYPE,
+        p_categoria TBL_INVENTARIO.CATEGORIA%TYPE,
+        p_costo TBL_INVENTARIO.COSTO%TYPE,
+        p_cantidad TBL_INVENTARIO.CANTIDAD%TYPE,
+        p_cedula_juridica_proveedor TBL_INVENTARIO.CEDULA_JURIDICA_PROVEEDOR%TYPE
+    ) AS
+        v_count NUMBER;
+    BEGIN
+        SELECT COUNT(*)
+        INTO v_count
+        FROM TBL_INVENTARIO
+        WHERE ID_PRODUCTO = p_id_producto;
+
+        IF v_count > 0 THEN
+            dbms_output.put_line('YA EXISTE UN REGISTRO CON EL ID ' || p_id_producto);
+        ELSE
+            INSERT INTO TBL_INVENTARIO(ID_PRODUCTO, CODIGO_BARRAS, NOMBRE_PRODUCTO, CATEGORIA, COSTO, CANTIDAD, CEDULA_JURIDICA_PROVEEDOR)
+            VALUES (p_id_producto, p_codigo_barras, p_nombre_producto, p_categoria, p_costo, p_cantidad, p_cedula_juridica_proveedor);
+            COMMIT;
+            dbms_output.put_line('REGISTRO REALIZADO');
+        END IF;
+    END sp_insertar_producto;
+
+    PROCEDURE sp_leer_producto(
+        p_id_producto TBL_INVENTARIO.ID_PRODUCTO%TYPE
+    ) AS
+        v_codigo_barras TBL_INVENTARIO.CODIGO_BARRAS%TYPE;
+        v_nombre_producto TBL_INVENTARIO.NOMBRE_PRODUCTO%TYPE;
+        v_categoria TBL_INVENTARIO.CATEGORIA%TYPE;
+        v_costo TBL_INVENTARIO.COSTO%TYPE;
+        v_cantidad TBL_INVENTARIO.CANTIDAD%TYPE;
+        v_cedula_juridica_proveedor TBL_INVENTARIO.CEDULA_JURIDICA_PROVEEDOR%TYPE;
+    BEGIN
+        SELECT CODIGO_BARRAS, NOMBRE_PRODUCTO, CATEGORIA, COSTO, CANTIDAD, CEDULA_JURIDICA_PROVEEDOR
+        INTO v_codigo_barras, v_nombre_producto, v_categoria, v_costo, v_cantidad, v_cedula_juridica_proveedor
+        FROM TBL_INVENTARIO
+        WHERE ID_PRODUCTO = p_id_producto;
+        
+        dbms_output.put_line('CODIGO BARRAS: ' || v_codigo_barras || ', NOMBRE PRODUCTO: ' || v_nombre_producto || ', CATEGORIA: ' || v_categoria || ', COSTO: ' || v_costo || ', CANTIDAD: ' || v_cantidad || ', CEDULA JURIDICA PROVEEDOR: ' || v_cedula_juridica_proveedor);
+        
+    EXCEPTION
+        WHEN no_data_found THEN
+            dbms_output.put_line('EL PRODUCTO CON EL ID ' || p_id_producto || ' NO FUE ENCONTRADO.');
+    END sp_leer_producto;
+
+    PROCEDURE sp_actualizar_producto(
+        p_id_producto TBL_INVENTARIO.ID_PRODUCTO%TYPE,
+        p_codigo_barras TBL_INVENTARIO.CODIGO_BARRAS%TYPE,
+        p_nombre_producto TBL_INVENTARIO.NOMBRE_PRODUCTO%TYPE,
+        p_categoria TBL_INVENTARIO.CATEGORIA%TYPE,
+        p_costo TBL_INVENTARIO.COSTO%TYPE,
+        p_cantidad TBL_INVENTARIO.CANTIDAD%TYPE,
+        p_cedula_juridica_proveedor TBL_INVENTARIO.CEDULA_JURIDICA_PROVEEDOR%TYPE
+    ) AS
+        v_count NUMBER;
+    BEGIN
+        SELECT COUNT(*)
+        INTO v_count
+        FROM TBL_INVENTARIO
+        WHERE ID_PRODUCTO = p_id_producto;
+
+        IF v_count > 0 THEN
+            UPDATE TBL_INVENTARIO
+            SET CODIGO_BARRAS = p_codigo_barras, NOMBRE_PRODUCTO = p_nombre_producto, CATEGORIA = p_categoria, COSTO = p_costo, CANTIDAD = p_cantidad, CEDULA_JURIDICA_PROVEEDOR = p_cedula_juridica_proveedor
+            WHERE ID_PRODUCTO = p_id_producto;
+            COMMIT;
+            dbms_output.put_line('EL PRODUCTO CON EL ID ' || p_id_producto || ' HA SIDO ACTUALIZADO.');
+        ELSE 
+            dbms_output.put_line('EL PRODUCTO CON EL ID ' || p_id_producto || ' NO FUE ENCONTRADO.');
+        END IF;
+    END sp_actualizar_producto;
+
+    PROCEDURE sp_eliminar_producto(
+        p_codigo_barras TBL_INVENTARIO.CODIGO_BARRAS%TYPE
+    ) AS
+        v_count NUMBER;
+    BEGIN
+        SELECT COUNT(*)
+        INTO v_count
+        FROM TBL_INVENTARIO
+        WHERE CODIGO_BARRAS = p_codigo_barras;
+
+        IF v_count > 0 THEN
+            DELETE FROM TBL_INVENTARIO
+            WHERE CODIGO_BARRAS = p_codigo_barras;
+            COMMIT;
+            dbms_output.put_line('EL PRODUCTO CON EL CODIGO BARRAS ' || p_codigo_barras || ' FUE ELIMINADO CORRECTAMENTE.');
+        ELSE
+            dbms_output.put_line('EL PRODUCTO CON EL CODIGO BARRAS ' || p_codigo_barras || ' NO FUE ENCONTRADO.');
+        END IF;
+    END sp_eliminar_producto;
+
+    PROCEDURE sp_listar_productos AS
+    BEGIN
+        FOR producto IN (SELECT ID_PRODUCTO, CODIGO_BARRAS, NOMBRE_PRODUCTO, CATEGORIA, COSTO, CANTIDAD, CEDULA_JURIDICA_PROVEEDOR FROM TBL_INVENTARIO) LOOP
+            dbms_output.put_line('ID: ' || producto.ID_PRODUCTO || ', CODIGO BARRAS: ' || producto.CODIGO_BARRAS || ', NOMBRE PRODUCTO: ' || producto.NOMBRE_PRODUCTO || ', CATEGORIA: ' || producto.CATEGORIA || ', COSTO: ' || producto.COSTO || ', CANTIDAD: ' || producto.CANTIDAD || ', CEDULA JURIDICA PROVEEDOR: ' || producto.CEDULA_JURIDICA_PROVEEDOR);
+        END LOOP;
+    END sp_listar_productos;
+
+    PROCEDURE sp_buscar_productos_por_categoria(
+        p_categoria TBL_INVENTARIO.CATEGORIA%TYPE
+    ) AS
+        v_count NUMBER;
+    BEGIN
+        SELECT COUNT(*)
+        INTO v_count
+        FROM TBL_INVENTARIO
+        WHERE CATEGORIA = p_categoria;
+
+        IF v_count = 0 THEN
+            dbms_output.put_line('NO SE ENCONTRARON PRODUCTOS EN LA CATEGORIA ESPECIFICADA.');
+        ELSE
+            FOR producto IN (SELECT ID_PRODUCTO, CODIGO_BARRAS, NOMBRE_PRODUCTO, CATEGORIA, COSTO, CANTIDAD, CEDULA_JURIDICA_PROVEEDOR
+                            FROM TBL_INVENTARIO
+                            WHERE CATEGORIA = p_categoria) LOOP
+                dbms_output.put_line('ID: ' || producto.ID_PRODUCTO || ', CODIGO BARRAS: ' || producto.CODIGO_BARRAS || ', NOMBRE PRODUCTO: ' || producto.NOMBRE_PRODUCTO || ', CATEGORIA: ' || producto.CATEGORIA || ', COSTO: ' || producto.COSTO || ', CANTIDAD: ' || producto.CANTIDAD || ', CEDULA JURIDICA PROVEEDOR: ' || producto.CEDULA_JURIDICA_PROVEEDOR);
+            END LOOP;
+        END IF;
+    END sp_buscar_productos_por_categoria;
+
+END pkg_inventario;
 /
-
--- SP para eliminar productos
-CREATE OR REPLACE PROCEDURE SP_ELIMINAR_PRODUCTO(
-P_CODIGO_BARRAS TBL_INVENTARIO.CODIGO_BARRAS%TYPE
-) AS
- V_COUNT NUMBER;
-BEGIN 
- SELECT COUNT(*)
- INTO V_COUNT
- FROM TBL_INVENTARIO
- WHERE CODIGO_BARRAS = P_CODIGO_BARRAS;
-
- IF V_COUNT > 0 THEN
- DELETE FROM TBL_INVENTARIO
- WHERE CODIGO_BARRAS = P_CODIGO_BARRAS;
- COMMIT;
- DBMS_OUTPUT.PUT_LINE('REGISTRO ELIMINADO');
- ELSE 
- DBMS_OUTPUT.PUT_LINE('NO EXISTE PRODUCTO CON EL ID' || P_ID_PRODUCTO);
- END IF;
-END;
-/
-
 -- Inicia bloque de funciones
 
 -- Buscar productos por codigo de barras, devuelve nombre
-CREATE OR REPLACE FUNCTION CONSULTAR_INVENTARIO_POR_CODIGO(CODIGO_BARRAS_IN NUMBER)
-RETURN VARCHAR2
+CREATE OR REPLACE FUNCTION consultar_inventario_por_codigo(
+    p_codigo_barras TBL_INVENTARIO.CODIGO_BARRAS%TYPE
+) RETURN VARCHAR2
 IS
-    NOMBRE_PRODUCTO TBL_INVENTARIO.NOMBRE_PRODUCTO%TYPE;
-    NOMBRE_PROVEEDOR TBL_PROVEEDOR.NOMBRE%TYPE;
+    v_nombre_producto TBL_INVENTARIO.NOMBRE_PRODUCTO%TYPE;
 BEGIN
-    -- Buscar el nombre del distrito en la tabla TBL_DISTRITO
-    SELECT D.ID_DISTRITO, D.NOMBRE_DISTRITO
-    INTO ID_DISTRITO, NOMBRE_DISTRITO
-    FROM TBL_DISTRITO D
-    WHERE ID_DISTRITO = ID_DISTRITO_IN;
+    SELECT NOMBRE_PRODUCTO
+    INTO v_nombre_producto
+    FROM TBL_INVENTARIO
+    WHERE CODIGO_BARRAS = p_codigo_barras;
 
-    -- Retornar el resultado
-    RETURN 'EL DISTRITO CON ID: ' || ID_DISTRITO || ' SE LLAMA: ' || NOMBRE_DISTRITO;
+    RETURN 'EL PRODUCTO CON CÓDIGO DE BARRAS: ' || p_codigo_barras || ' SE LLAMA: ' || v_nombre_producto;
 EXCEPTION
     WHEN NO_DATA_FOUND THEN
-        RETURN 'EL DISTRITO CON ID: ' || ID_DISTRITO || ' NO FUE ENCONTRADO';
+        RETURN 'EL PRODUCTO CON CÓDIGO DE BARRAS: ' || p_codigo_barras || ' NO FUE ENCONTRADO';
     WHEN OTHERS THEN
-        RETURN 'ERROR AL CONSULTAR EL DISTRITO';
+        RETURN 'ERROR AL CONSULTAR EL PRODUCTO';
 END;
 /
+
+--Ejecute de los ps dentro del paquete
+EXEC pkg_inventario.sp_insertar_producto(1, 123456789012, 'Producto prueba', 'Categoría1', 99.99, 10, 101234567);
+EXEC pkg_inventario.sp_leer_producto(1);
+EXEC pkg_inventario.sp_actualizar_producto(1, 987654321098, 'Producto prueba actualizado', 'Categoría actualizada', 199.99, 20, 101234567);
+EXEC pkg_inventario.sp_eliminar_producto(123456789012);
+EXEC pkg_inventario.sp_listar_productos;
+EXEC pkg_inventario.sp_buscar_productos_por_categoria('Categoría1' );
+EXEC pkg_inventario.sp_buscar_productos_por_categoria('Categoría actualizada');
+
+--Ejecute de la funcion
+SELECT consultar_inventario_por_codigo(987654321098) AS resultado FROM dual;
+
+
+
+
