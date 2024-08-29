@@ -139,9 +139,29 @@ END pkg_direccion_utilidades;
 -- Bloque CRUD con SPs para TBL_DIRECCION usando el paquete pkg_direccion_utilidades
 
 -- Insertar una nueva dirección
+EXEC pkg_direccion_utilidades.sp_insertar_direccion(65, 'Avenida 1 Detras Del Palo De Mangos', 1);
+EXEC pkg_direccion_utilidades.sp_leer_direccion(65);
+EXEC pkg_direccion_utilidades.sp_actualizar_direccion(65, 'Avenida 2 frente a la planta de chayotes', 1);
 EXEC pkg_direccion_utilidades.sp_insertar_direccion(1, 'Avenida 1 Detras Del Palo De Mangos', 1);
+EXEC pkg_direccion_utilidades.sp_insertar_direccion(2, 'Calle Hernandez frente al taller Juanito', 1);
+EXEC pkg_direccion_utilidades.sp_insertar_direccion(3, 'Boulevard Central junto al parque', 2);
+EXEC pkg_direccion_utilidades.sp_insertar_direccion(4, 'Calle 4 esquina con Calle 5', 3);
+
 EXEC pkg_direccion_utilidades.sp_leer_direccion(1);
+EXEC pkg_direccion_utilidades.sp_leer_direccion(2);
+EXEC pkg_direccion_utilidades.sp_leer_direccion(3);
+EXEC pkg_direccion_utilidades.sp_leer_direccion(4);
+
 EXEC pkg_direccion_utilidades.sp_actualizar_direccion(1, 'Avenida 2 frente a la planta de chayotes', 1);
+EXEC pkg_direccion_utilidades.sp_actualizar_direccion(2, 'Calle 2 frente al nuevo taller Juanito', 1);
+EXEC pkg_direccion_utilidades.sp_actualizar_direccion(3, 'Boulevard Nuevo Central junto al parque', 2);
+EXEC pkg_direccion_utilidades.sp_actualizar_direccion(4, 'Calle 5 esquina con Calle 6', 3);
+
+EXEC pkg_direccion_utilidades.sp_eliminar_direccion(1);
+EXEC pkg_direccion_utilidades.sp_eliminar_direccion(2);
+EXEC pkg_direccion_utilidades.sp_eliminar_direccion(3);
+EXEC pkg_direccion_utilidades.sp_eliminar_direccion(4);
+
 
 --EXEC pkg_direccion_utilidades.sp_eliminar_direccion(1);
 
