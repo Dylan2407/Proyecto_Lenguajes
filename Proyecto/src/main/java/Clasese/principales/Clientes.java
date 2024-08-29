@@ -5,17 +5,17 @@ import java.time.LocalDate;
 public class Clientes {
     
     int id_cliente;
-    int cedula;
+    long cedula;
     String nombre;
     String apellido;
-    int telefono;
+    long telefono;
     LocalDate fechaingreso;
     String direccion;
     
     public Clientes(){
     }
 
-    public Clientes(int id_cliente, int cedula, String nombre, String apellido, int telefono, LocalDate fechaingreso, String direccion) {
+    public Clientes(int id_cliente, long cedula, String nombre, String apellido, long telefono, LocalDate fechaingreso, String direccion) {
         this.id_cliente = id_cliente;
         this.cedula = cedula;
         this.nombre = nombre;
@@ -33,11 +33,11 @@ public class Clientes {
         this.id_cliente = id_cliente;
     }
 
-    public int getCedula() {
+    public long getCedula() {
         return cedula;
     }
 
-    public void setCedula(int cedula) {
+    public void setCedula(long cedula) {
         this.cedula = cedula;
     }
 
@@ -57,11 +57,11 @@ public class Clientes {
         this.apellido = apellido;
     }
 
-    public int getTelefono() {
+    public long getTelefono() {
         return telefono;
     }
 
-    public void setTelefono(int telefono) {
+    public void setTelefono(long telefono) {
         this.telefono = telefono;
     }
 
