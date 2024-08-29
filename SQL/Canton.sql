@@ -78,8 +78,6 @@ CREATE OR REPLACE PACKAGE canton_pkg AS
 END canton_pkg;
 /
 
-// Inicia triggers
-
 -- Trigger insercion
 CREATE OR REPLACE TRIGGER trg_audit_insert_canton
 AFTER INSERT ON TBL_CANTON
@@ -159,126 +157,6 @@ BEGIN
 END;
 /
 
--- SP para actualizar datos en tabla TBL_CANTON
-CREATE OR REPLACE PROCEDURE SP_ACTUALIZAR_CANTON(
-    P_ID_CANTON IN TBL_CANTON.ID_CANTON%TYPE,
-    P_NUEVO_NOMBRE_CANTON IN TBL_CANTON.NOMBRE_CANTON%TYPE
-) IS
-    v_sql VARCHAR2(1000);
-BEGIN
-    -- Permitir la actualización al establecer la variable global
-    canton_pkg.g_allow_update := TRUE;
-    
-    -- Construir la consulta de actualización con las cláusulas SET y WHERE proporcionadas
-    v_sql := 'UPDATE TBL_CANTON SET NOMBRE_CANTON = ''' || P_NUEVO_NOMBRE_CANTON || ''' WHERE ID_CANTON = ' || P_ID_CANTON;
-    
-    -- Ejecutar la consulta dinámica
-    EXECUTE IMMEDIATE v_sql;
-    
-    -- Confirmar la actualización
-    DBMS_OUTPUT.PUT_LINE('Actualización realizada con nombre de canton cambiado a: ' || P_NUEVO_NOMBRE_CANTON || ' y id: ' || P_ID_CANTON);
-    
-    -- Restablecer la variable para bloquear futuras actualizaciones directas
-    canton_pkg.g_allow_update := FALSE;
-EXCEPTION
-    WHEN NO_DATA_FOUND THEN
-        DBMS_OUTPUT.PUT_LINE('No se encontraron registros para actualizar con la condición proporcionada.');
-    WHEN OTHERS THEN
-        -- Asegurarse de restablecer la variable incluso si hay un error
-        canton_pkg.g_allow_update := FALSE;
-        DBMS_OUTPUT.PUT_LINE('Error en la actualización: ' || SQLERRM);
-END;
-/
-
--- SP para eliminar datos en tabla TBL_CANTON
-CREATE OR REPLACE PROCEDURE SP_ELIMINAR_CANTON(p_id_canton IN TBL_CANTON.ID_CANTON%TYPE) IS
-    v_sql VARCHAR2(1000);
-BEGIN
-    -- Permitir la actualización al establecer la variable global
-    canton_pkg.g_allow_delete := TRUE;
-    -- Construir la consulta de eliminación con la condición proporcionada
-    v_sql := 'DELETE FROM TBL_CANTON WHERE ID_CANTON=' || p_id_canton;
-    
-    -- Ejecutar la consulta dinámica
-    EXECUTE IMMEDIATE v_sql;
-    
-    -- Confirmar la eliminación
-    DBMS_OUTPUT.PUT_LINE('Eliminación realizada con condición: ' || p_id_canton);
-EXCEPTION
-    WHEN NO_DATA_FOUND THEN
-        DBMS_OUTPUT.PUT_LINE('No se encontraron registros para eliminar con la condición proporcionada.');
-    WHEN OTHERS THEN
-        DBMS_OUTPUT.PUT_LINE('Error en la eliminación: ' || SQLERRM);
-END;
-/
-
--- SP para leer datos en tabla TBL_CANTON
-CREATE OR REPLACE PROCEDURE SP_LEER_CANTON(
-    P_ID_CANTON NUMBER
-)IS
-    V_ID_CANTON TBL_CANTON.ID_CANTON%TYPE;
-    V_NOMBRE_CANTON TBL_CANTON.NOMBRE_CANTON%TYPE;
-BEGIN    
-    SELECT ID_CANTON, NOMBRE_CANTON INTO V_ID_CANTON, V_NOMBRE_CANTON
-    FROM TBL_CANTON
-    WHERE ID_CANTON = P_ID_CANTON;
-    
-    DBMS_OUTPUT.PUT_LINE('ID DEL CANTON: ' || V_ID_CANTON || ', EL NOMBRE DEL CANTON ES: ' || V_NOMBRE_CANTON);
-    
-EXCEPTION
-    WHEN NO_DATA_FOUND THEN
-    DBMS_OUTPUT.PUT_LINE('EL CANTON CON EL ID ' || P_ID_CANTON || ' NO FUE ENCONTRADO.');
-END;
-/
-
---Inicia bloque funciones
---Consulta la provincia a la que corresponde un canton
-CREATE OR REPLACE FUNCTION CONSULTAR_CANTON(NOMBRE_CANTON_IN VARCHAR2)
-RETURN VARCHAR2
-IS
-    NOMBRE_CANTON TBL_CANTON.NOMBRE_CANTON%TYPE;
-    NOMBRE_PROVINCIA TBL_PROVINCIA.NOMBRE_PROVINCIA%TYPE;
-BEGIN
-    -- Buscar el nombre del canton en la tabla TBL_CANTON
-    SELECT C.NOMBRE_CANTON, P.NOMBRE_PROVINCIA
-    INTO NOMBRE_CANTON, NOMBRE_PROVINCIA
-    FROM TBL_CANTON C
-    INNER JOIN TBL_PROVINCIA P ON C.ID_PROVINCIA = P.ID_PROVINCIA
-    WHERE REGEXP_LIKE (C.NOMBRE_CANTON,NOMBRE_CANTON_IN,'i');
-
-    -- Retornar el resultado
-    RETURN 'EL CANTON CON NOMBRE: ' || NOMBRE_CANTON || ' PERTENECE A LA PROVINCIA ' || NOMBRE_PROVINCIA;
-EXCEPTION
-    WHEN NO_DATA_FOUND THEN
-        RETURN 'CANTON' || NOMBRE_CANTON || ' NO ENCONTRADO';
-    WHEN OTHERS THEN
-        RETURN 'ERROR AL CONSULTAR EL CANTON';
-END;
-/
-
---Busqueda de canton por id
-CREATE OR REPLACE FUNCTION CONSULTAR_CANTON_CON_ID(ID_CANTON_IN NUMBER)
-RETURN VARCHAR2
-IS
-    ID_CANTON TBL_CANTON.ID_CANTON%TYPE;
-    NOMBRE_CANTON TBL_CANTON.NOMBRE_CANTON%TYPE;
-BEGIN
-    -- Buscar el ID del canton en la tabla TBL_CANTON
-    SELECT C.ID_CANTON, C.NOMBRE_CANTON
-    INTO ID_CANTON, NOMBRE_CANTON
-    FROM TBL_CANTON C
-    WHERE ID_CANTON = ID_CANTON_IN;
-
-    -- Retornar el resultado
-    RETURN 'EL CANTON CON ID: ' || ID_CANTON || ' SE LLAMA: ' || NOMBRE_CANTON;
-EXCEPTION
-    WHEN NO_DATA_FOUND THEN
-        RETURN 'EL CANTON CON ID: ' || ID_CANTON || ' NO FUE ENCONTRADO';
-    WHEN OTHERS THEN
-        RETURN 'ERROR AL CONSULTAR EL CANTON';
-END;
-/
-
 --VISTA PARA LISTAR TODOS LOS CANTONES
 CREATE OR REPLACE VIEW VISTA_LISTAR_CANTONES AS 
 SELECT C.ID_CANTON "NUMERO DE CANTON", Upper(C.NOMBRE_CANTON) "NOMBRE DEL CANTON", Upper(P.NOMBRE_PROVINCIA) "PERTENECE A LA PROVINCIA DE" FROM TBL_CANTON C
@@ -311,6 +189,198 @@ BEGIN
     END LOOP;
     CLOSE c_cantones;
 END;
+/
+
+
+CREATE OR REPLACE PACKAGE pkg_canton AS
+    FUNCTION consultar_canton(
+        nombre_canton_in VARCHAR2
+    ) RETURN VARCHAR2;
+
+    FUNCTION consultar_canton_con_id(
+        id_canton_in NUMBER
+    ) RETURN VARCHAR2;
+END pkg_canton;
+/
+
+CREATE OR REPLACE PACKAGE BODY pkg_canton AS
+
+    FUNCTION consultar_canton(
+        nombre_canton_in VARCHAR2
+    ) RETURN VARCHAR2
+    IS
+        nombre_canton TBL_CANTON.NOMBRE_CANTON%TYPE;
+        nombre_provincia TBL_PROVINCIA.NOMBRE_PROVINCIA%TYPE;
+    BEGIN
+        -- Buscar el nombre del canton en la tabla TBL_CANTON
+        SELECT C.NOMBRE_CANTON, P.NOMBRE_PROVINCIA
+        INTO nombre_canton, nombre_provincia
+        FROM TBL_CANTON C
+        INNER JOIN TBL_PROVINCIA P ON C.ID_PROVINCIA = P.ID_PROVINCIA
+        WHERE REGEXP_LIKE (C.NOMBRE_CANTON, nombre_canton_in, 'i');
+
+        -- Retornar el resultado
+        RETURN 'EL CANTON CON NOMBRE: ' || nombre_canton || ' PERTENECE A LA PROVINCIA ' || nombre_provincia;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            RETURN 'CANTON ' || nombre_canton_in || ' NO ENCONTRADO';
+        WHEN OTHERS THEN
+            RETURN 'ERROR AL CONSULTAR EL CANTON';
+    END;
+
+    FUNCTION consultar_canton_con_id(
+        id_canton_in NUMBER
+    ) RETURN VARCHAR2
+    IS
+        id_canton TBL_CANTON.ID_CANTON%TYPE;
+        nombre_canton TBL_CANTON.NOMBRE_CANTON%TYPE;
+    BEGIN
+        -- Buscar el ID del canton en la tabla TBL_CANTON
+        SELECT C.ID_CANTON, C.NOMBRE_CANTON
+        INTO id_canton, nombre_canton
+        FROM TBL_CANTON C
+        WHERE C.ID_CANTON = id_canton_in;
+
+        -- Retornar el resultado
+        RETURN 'EL CANTON CON ID: ' || id_canton || ' SE LLAMA: ' || nombre_canton;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            RETURN 'EL CANTON CON ID: ' || id_canton_in || ' NO FUE ENCONTRADO';
+        WHEN OTHERS THEN
+            RETURN 'ERROR AL CONSULTAR EL CANTON';
+    END;
+
+END pkg_canton;
+/
+
+CREATE OR REPLACE PACKAGE pkg_canton_utilidades AS
+    -- Declaración de variables globales
+    g_allow_update BOOLEAN := FALSE;
+    g_allow_delete BOOLEAN := FALSE;
+
+    -- Declaración de procedimientos
+    PROCEDURE sp_insertar_canton (
+        p_id_canton TBL_CANTON.ID_CANTON%TYPE,
+        p_nombre_canton TBL_CANTON.NOMBRE_CANTON%TYPE,
+        p_id_provincia TBL_CANTON.ID_PROVINCIA%TYPE
+    );
+
+    PROCEDURE sp_actualizar_canton(
+        p_id_canton IN TBL_CANTON.ID_CANTON%TYPE,
+        p_nuevo_nombre_canton IN TBL_CANTON.NOMBRE_CANTON%TYPE
+    );
+
+    PROCEDURE sp_eliminar_canton(
+        p_id_canton IN TBL_CANTON.ID_CANTON%TYPE
+    );
+
+    PROCEDURE sp_leer_canton(
+        p_id_canton NUMBER
+    );
+END pkg_canton_utilidades;
+/
+
+CREATE OR REPLACE PACKAGE BODY pkg_canton_utilidades AS
+
+    -- Implementación del procedimiento para insertar cantones
+    PROCEDURE sp_insertar_canton (
+        p_id_canton TBL_CANTON.ID_CANTON%TYPE,
+        p_nombre_canton TBL_CANTON.NOMBRE_CANTON%TYPE,
+        p_id_provincia TBL_CANTON.ID_PROVINCIA%TYPE
+    ) AS
+        v_count NUMBER;
+    BEGIN
+        SELECT COUNT(*)
+        INTO v_count
+        FROM TBL_CANTON
+        WHERE ID_CANTON = p_id_canton;
+
+        IF v_count > 0 THEN
+            DBMS_OUTPUT.PUT_LINE('YA EXISTE UN REGISTRO CON EL ID ' || p_id_canton);
+        ELSE
+            INSERT INTO TBL_CANTON (ID_CANTON, NOMBRE_CANTON, ID_PROVINCIA)
+            VALUES (p_id_canton, p_nombre_canton, p_id_provincia);
+            COMMIT;
+            DBMS_OUTPUT.PUT_LINE('REGISTRO REALIZADO');
+        END IF;
+    END sp_insertar_canton;
+
+    -- Implementación del procedimiento para actualizar cantones
+    PROCEDURE sp_actualizar_canton(
+        p_id_canton IN TBL_CANTON.ID_CANTON%TYPE,
+        p_nuevo_nombre_canton IN TBL_CANTON.NOMBRE_CANTON%TYPE
+    ) IS
+        v_sql VARCHAR2(1000);
+    BEGIN
+        -- Permitir la actualización al establecer la variable global
+        g_allow_update := TRUE;
+        
+        -- Construir la consulta de actualización
+        v_sql := 'UPDATE TBL_CANTON SET NOMBRE_CANTON = ''' || p_nuevo_nombre_canton || ''' WHERE ID_CANTON = ' || p_id_canton;
+        
+        -- Ejecutar la consulta dinámica
+        EXECUTE IMMEDIATE v_sql;
+        
+        -- Confirmar la actualización
+        DBMS_OUTPUT.PUT_LINE('Actualización realizada con nombre de canton cambiado a: ' || p_nuevo_nombre_canton || ' y id: ' || p_id_canton);
+        
+        -- Restablecer la variable para bloquear futuras actualizaciones directas
+        g_allow_update := FALSE;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            DBMS_OUTPUT.PUT_LINE('No se encontraron registros para actualizar con la condición proporcionada.');
+        WHEN OTHERS THEN
+            -- Asegurarse de restablecer la variable incluso si hay un error
+            g_allow_update := FALSE;
+            DBMS_OUTPUT.PUT_LINE('Error en la actualización: ' || SQLERRM);
+    END sp_actualizar_canton;
+
+    -- Implementación del procedimiento para eliminar cantones
+    PROCEDURE sp_eliminar_canton(
+        p_id_canton IN TBL_CANTON.ID_CANTON%TYPE
+    ) IS
+        v_sql VARCHAR2(1000);
+    BEGIN
+        -- Permitir la eliminación al establecer la variable global
+        g_allow_delete := TRUE;
+        
+        -- Construir la consulta de eliminación
+        v_sql := 'DELETE FROM TBL_CANTON WHERE ID_CANTON=' || p_id_canton;
+        
+        -- Ejecutar la consulta dinámica
+        EXECUTE IMMEDIATE v_sql;
+        
+        -- Confirmar la eliminación
+        DBMS_OUTPUT.PUT_LINE('Eliminación realizada con condición: ' || p_id_canton);
+        
+        -- Restablecer la variable para bloquear futuras eliminaciones directas
+        g_allow_delete := FALSE;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            DBMS_OUTPUT.PUT_LINE('No se encontraron registros para eliminar con la condición proporcionada.');
+        WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('Error en la eliminación: ' || SQLERRM);
+    END sp_eliminar_canton;
+
+    -- Implementación del procedimiento para leer cantones
+    PROCEDURE sp_leer_canton(
+        p_id_canton NUMBER
+    ) IS
+        v_id_canton TBL_CANTON.ID_CANTON%TYPE;
+        v_nombre_canton TBL_CANTON.NOMBRE_CANTON%TYPE;
+    BEGIN    
+        SELECT ID_CANTON, NOMBRE_CANTON INTO v_id_canton, v_nombre_canton
+        FROM TBL_CANTON
+        WHERE ID_CANTON = p_id_canton;
+        
+        DBMS_OUTPUT.PUT_LINE('ID DEL CANTON: ' || v_id_canton || ', EL NOMBRE DEL CANTON ES: ' || v_nombre_canton);
+        
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            DBMS_OUTPUT.PUT_LINE('EL CANTON CON EL ID ' || p_id_canton || ' NO FUE ENCONTRADO.');
+    END sp_leer_canton;
+
+END pkg_canton_utilidades;
 /
 
 --CURSOR PARA LISTAR LOS CANTONES EN UN RANGO DE ID
@@ -436,20 +506,23 @@ INSERT INTO TBL_CANTON (ID_CANTON,ID_PROVINCIA,NOMBRE_CANTON) VALUES  (704,7,'Ta
 INSERT INTO TBL_CANTON (ID_CANTON,ID_PROVINCIA,NOMBRE_CANTON) VALUES  (705,7,'Matina');
 INSERT INTO TBL_CANTON (ID_CANTON,ID_PROVINCIA,NOMBRE_CANTON) VALUES  (706,7,'Guácimo');
 
--- Bloque CRUD con SPs para TBL_CANTON
-//EXEC sp_insertar_canton(101,'San José',1);
-//EXEC sp_actualizar_canton(101,'Cartago');
-//EXEC sp_eliminar_canton(101);
-//EXEC sp_leer_canton(1001);
-
---Revisando tabla auditoria
-SELECT * FROM TBL_CANTON_AUDIT ORDER BY INSERT_DATE DESC;
+BEGIN pkg_canton_utilidades.sp_insertar_canton(777, 'test', 1);END;
+/
+BEGIN pkg_canton_utilidades.sp_actualizar_canton(777, 'test2'); END;
+/
+BEGIN pkg_canton_utilidades.sp_eliminar_canton(777); END;
+/
+BEGIN pkg_canton_utilidades.sp_leer_canton(777); END;
+/
 
 --Llamando la vista Canton
 SELECT "NUMERO DE CANTON", "NOMBRE DEL CANTON", "PERTENECE A LA PROVINCIA DE" FROM VISTA_LISTAR_CANTONES;
 SELECT "NUMERO DE CANTONES" FROM VISTA_CANTIDAD_DE_CANTONES;
 
 --Llamando funciones de Canton
-SELECT CONSULTAR_CANTON('MorAvIa') RESULTADO FROM DUAL;
-SELECT CONSULTAR_CANTON('SaN rAfAEl') RESULTADO FROM DUAL;
-SELECT CONSULTAR_CANTON_CON_ID(103) RESULTADO FROM DUAL;
+SELECT pkg_canton.consultar_canton('MorAvIa') AS RESULTADO FROM DUAL;
+SELECT pkg_canton.consultar_canton('SaN rAfAEl') AS RESULTADO FROM DUAL;
+SELECT pkg_canton.consultar_canton_con_id(103) AS RESULTADO FROM DUAL;
+
+
+
