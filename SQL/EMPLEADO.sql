@@ -231,15 +231,34 @@ WITH READ ONLY;
 -- Con registros en TBL_EMPLEADO con ID_CLIENTE de 1 a 5
 
 EXEC pkg_empleado_utilidades.insertar_empleado(1, 123456789, 'Ana', 'García', 3000.00, 1, TO_DATE('2024-07-26', 'YYYY-MM-DD'));
-
 EXEC pkg_empleado_utilidades.insertar_empleado(2, 987654321, 'Luis', 'Pérez', 3500.00, 2, TO_DATE('2024-07-26', 'YYYY-MM-DD'));
-
 EXEC pkg_empleado_utilidades.insertar_empleado(3, 456123789, 'María', 'Rodríguez', 4000.00, 3, TO_DATE('2024-07-26', 'YYYY-MM-DD'));
-
 EXEC pkg_empleado_utilidades.insertar_empleado(4, 321654987, 'Carlos', 'Mendoza', 3200.00, 4, TO_DATE('2024-07-26', 'YYYY-MM-DD'));
-
 EXEC pkg_empleado_utilidades.insertar_empleado(5, 147258369, 'Lucía', 'Martínez', 2800.00, 5, TO_DATE('2024-07-26', 'YYYY-MM-DD'));
+EXEC pkg_empleado_utilidades.insertar_empleado(6, 654321987, 'Sofía', 'Gómez', 3100.00, 1, TO_DATE('2024-08-01', 'YYYY-MM-DD'));
+EXEC pkg_empleado_utilidades.insertar_empleado(7, 789456123, 'Javier', 'Morales', 3300.00, 2, TO_DATE('2024-08-02', 'YYYY-MM-DD'));
+EXEC pkg_empleado_utilidades.insertar_empleado(8, 159753486, 'Laura', 'Castro', 2900.00, 3, TO_DATE('2024-08-03', 'YYYY-MM-DD'));
+EXEC pkg_empleado_utilidades.insertar_empleado(9, 456987123, 'Mateo', 'Salazar', 3500.00, 4, TO_DATE('2024-08-04', 'YYYY-MM-DD'));
 
+-- Lee datos de empleados
+EXEC pkg_empleado_utilidades.leer_empleado(1);
+EXEC pkg_empleado_utilidades.leer_empleado(2);
+EXEC pkg_empleado_utilidades.leer_empleado(3);
+EXEC pkg_empleado_utilidades.leer_empleado(4);
+
+
+-- Actualiza empleados
+EXEC pkg_empleado_utilidades.actualizar_empleado(1, 123456789, 'Ana María', 'García', 3200.00, 1, TO_DATE('2024-07-26', 'YYYY-MM-DD'));
+EXEC pkg_empleado_utilidades.actualizar_empleado(2, 987654322, 'Luis Fernando', 'Pérez', 3550.00, 2, TO_DATE('2024-07-27', 'YYYY-MM-DD'));
+EXEC pkg_empleado_utilidades.actualizar_empleado(3, 456123788, 'María Isabel', 'Rodríguez', 4050.00, 3, TO_DATE('2024-07-28', 'YYYY-MM-DD'));
+EXEC pkg_empleado_utilidades.actualizar_empleado(4, 321654986, 'Carlos Alberto', 'Mendoza', 3250.00, 4, TO_DATE('2024-07-29', 'YYYY-MM-DD'));
+
+
+-- Elimina empleados
+EXEC pkg_empleado_utilidades.eliminar_empleado(6);
+EXEC pkg_empleado_utilidades.eliminar_empleado(7);
+EXEC pkg_empleado_utilidades.eliminar_empleado(8);
+EXEC pkg_empleado_utilidades.eliminar_empleado(9);
 
 --Llamando vistas
 SELECT "INFORMACION PERSONAL" FROM vista_listar_empleados;
@@ -249,4 +268,14 @@ SELECT "CANTIDAD DE EMPLEADOS" FROM vista_cantidad_de_empleados;
 SELECT pkg_empleado_utilidades.consultar_empleado_con_identificacion(123456789) RESULTADO FROM DUAL;
 SELECT pkg_empleado_utilidades.consultar_cliente_asociado_a_empleado(505050505) RESULTADO FROM DUAL;
 
+-- Consulta empleados por identificación
+SELECT pkg_empleado_utilidades.consultar_empleado_con_identificacion(123456789) RESULTADO FROM DUAL;
+SELECT pkg_empleado_utilidades.consultar_empleado_con_identificacion(987654322) RESULTADO FROM DUAL;
+SELECT pkg_empleado_utilidades.consultar_empleado_con_identificacion(456123788) RESULTADO FROM DUAL;
+SELECT pkg_empleado_utilidades.consultar_empleado_con_identificacion(321654986) RESULTADO FROM DUAL;
 
+-- Consulta cliente asociado a empleado por cédula
+SELECT pkg_empleado_utilidades.consultar_cliente_asociado_a_empleado(8642097) RESULTADO FROM DUAL;
+SELECT pkg_empleado_utilidades.consultar_cliente_asociado_a_empleado(303030303) RESULTADO FROM DUAL;
+SELECT pkg_empleado_utilidades.consultar_cliente_asociado_a_empleado(202020202) RESULTADO FROM DUAL;
+SELECT pkg_empleado_utilidades.consultar_cliente_asociado_a_empleado(101010101) RESULTADO FROM DUAL;
