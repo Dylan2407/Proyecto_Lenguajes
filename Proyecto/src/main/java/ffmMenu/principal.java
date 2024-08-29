@@ -2,41 +2,116 @@ package ffmMenu;
 
 import Clasese.principales.Clientes;
 import ConexionSQLDB.ClienteDB;
+import java.time.LocalDate;
 import java.util.ArrayList;
+import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 
-
 public class principal extends javax.swing.JFrame {
-ArrayList<Clientes>cliente;
-ClienteDB db=new ClienteDB();
+
+    ArrayList<Clientes> cliente;
+    ClienteDB db = new ClienteDB();
+
     /**
      * Creates new form principal
      */
     public principal() {
         initComponents();
     }
-    
-    public void listarDatos(){
-    cliente = db.ListClientes();
-    DefaultTableModel tb = (DefaultTableModel) tblTabla.getModel();
-    
-    // Limpiar la tabla antes de agregar nuevas filas
-    tb.setRowCount(0);
-    
-    for (Clientes cl : cliente) {
-        tb.addRow(new Object[]{
-            cl.getId_cliente(),
-            cl.getCedula(),
-            cl.getNombre(),
-            cl.getApellido(),
-            cl.getTelefono(),
-            cl.getFechaingreso(),
-            cl.getDireccion()
-        });
+
+    public void listarDatos() {
+        cliente = db.ListClientes();
+        DefaultTableModel tb = (DefaultTableModel) tblTabla.getModel();
+
+        // Limpiar la tabla antes de agregar nuevas filas
+        tb.setRowCount(0);
+
+        for (Clientes cl : cliente) {
+            tb.addRow(new Object[]{
+                cl.getId_cliente(),
+                cl.getCedula(),
+                cl.getNombre(),
+                cl.getApellido(),
+                cl.getTelefono(),
+                cl.getFechaingreso(),
+                cl.getDireccion()
+            });
+        }
     }
-}
 
+    ClienteDB clienteDB = new ClienteDB();
 
+    // Method to display a JOptionPane for updating a client
+    private void updateClient() {
+        try {
+            // Gather user input
+            String idStr = JOptionPane.showInputDialog(this, "Ingrese el ID del cliente a modificar:");
+            if (idStr == null || idStr.isEmpty()) {
+                return;
+            }
+            long id = Long.parseLong(idStr);
+
+            String cedulaStr = JOptionPane.showInputDialog(this, "Ingrese nueva Cedula:");
+            long cedula = Long.parseLong(cedulaStr);
+
+            String nombre = JOptionPane.showInputDialog(this, "Ingrese nuevo nombre:");
+            String apellido = JOptionPane.showInputDialog(this, "Ingrese nuevo apellido:");
+            String telefonoStr = JOptionPane.showInputDialog(this, "Ingrese nuevo telefono:");
+            long telefono = Long.parseLong(telefonoStr);
+
+            String fechaIngresoStr = JOptionPane.showInputDialog(this, "Ingrese nueva fecha de ingreso (YYYY-MM-DD):");
+            LocalDate fechaIngreso = LocalDate.parse(fechaIngresoStr);
+
+            String direccion = JOptionPane.showInputDialog(this, "Ingrese nueva direccion:");
+
+            // Create a Clientes object with the input data
+            Clientes cliente = new Clientes();
+            cliente.setId_cliente((int) id);
+            cliente.setCedula(cedula);
+            cliente.setNombre(nombre);
+            cliente.setApellido(apellido);
+            cliente.setTelefono(telefono);
+            cliente.setFechaingreso(fechaIngreso);
+            cliente.setDireccion(direccion);
+
+            // Update the record in the database
+            boolean updated = clienteDB.updateCliente(cliente);
+            if (updated) {
+                JOptionPane.showMessageDialog(this, "Registro actualizado exitosamente.");
+            } else {
+                JOptionPane.showMessageDialog(this, "Actualizacion de registro fallida.");
+            }
+
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Formato de numero invalido. Por favor trate de nuevo.");
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
+        }
+    }
+
+    private void deleteClient() {
+        try {
+            // Gather user input
+            String idStr = JOptionPane.showInputDialog(this, "Enter Client ID to delete:");
+            if (idStr == null || idStr.isEmpty()) {
+                return;
+            }
+            long id = Long.parseLong(idStr);
+
+            // Call the method to delete the client
+            boolean deleted = clienteDB.deleteCliente(id);
+            if (deleted) {
+                JOptionPane.showMessageDialog(this, "Client deleted successfully.");
+            } else {
+                JOptionPane.showMessageDialog(this, "Client deletion failed.");
+            }
+
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Invalid number format. Please try again.");
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
+        }
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -44,12 +119,14 @@ ClienteDB db=new ClienteDB();
      * regenerated by the Form Editor.
      */
     @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">                          
     private void initComponents() {
 
         jScrollPane1 = new javax.swing.JScrollPane();
         tblTabla = new javax.swing.JTable();
-        btnListar = new javax.swing.JButton();
+        btnActualizar = new javax.swing.JButton();
+        btnListar1 = new javax.swing.JButton();
+        btnEliminar = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -69,10 +146,24 @@ ClienteDB db=new ClienteDB();
         ));
         jScrollPane1.setViewportView(tblTabla);
 
-        btnListar.setText("Listar");
-        btnListar.addActionListener(new java.awt.event.ActionListener() {
+        btnActualizar.setText("Actualizar");
+        btnActualizar.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnListarActionPerformed(evt);
+                btnActualizarActionPerformed(evt);
+            }
+        });
+
+        btnListar1.setText("Listar");
+        btnListar1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnListar1ActionPerformed(evt);
+            }
+        });
+
+        btnEliminar.setText("Eliminar");
+        btnEliminar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnEliminarActionPerformed(evt);
             }
         });
 
@@ -82,30 +173,51 @@ ClienteDB db=new ClienteDB();
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 657, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(btnListar, javax.swing.GroupLayout.PREFERRED_SIZE, 92, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(145, 145, 145)))
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 657, Short.MAX_VALUE)
                 .addContainerGap())
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(btnEliminar, javax.swing.GroupLayout.PREFERRED_SIZE, 92, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(btnActualizar, javax.swing.GroupLayout.PREFERRED_SIZE, 92, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(141, 141, 141))
+            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                    .addContainerGap(436, Short.MAX_VALUE)
+                    .addComponent(btnListar1, javax.swing.GroupLayout.PREFERRED_SIZE, 92, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGap(141, 141, 141)))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addGap(25, 25, 25)
-                .addComponent(btnListar, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(124, 124, 124)
+                .addGap(82, 82, 82)
+                .addComponent(btnActualizar, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(btnEliminar, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(22, 22, 22)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 287, Short.MAX_VALUE)
                 .addContainerGap())
+            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createSequentialGroup()
+                    .addGap(35, 35, 35)
+                    .addComponent(btnListar1, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addContainerGap(407, Short.MAX_VALUE)))
         );
 
         pack();
-    }// </editor-fold>//GEN-END:initComponents
+    }// </editor-fold>                        
 
-    private void btnListarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnListarActionPerformed
-       listarDatos();
-    }//GEN-LAST:event_btnListarActionPerformed
+    private void btnActualizarActionPerformed(java.awt.event.ActionEvent evt) {                                              
+        updateClient();
+    }                                             
+
+    private void btnListar1ActionPerformed(java.awt.event.ActionEvent evt) {                                           
+        listarDatos();
+    }                                          
+
+    private void btnEliminarActionPerformed(java.awt.event.ActionEvent evt) {                                            
+        deleteClient();
+    }                                           
 
     /**
      * @param args the command line arguments
@@ -142,9 +254,11 @@ ClienteDB db=new ClienteDB();
         });
     }
 
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton btnListar;
+    // Variables declaration - do not modify                     
+    private javax.swing.JButton btnActualizar;
+    private javax.swing.JButton btnEliminar;
+    private javax.swing.JButton btnListar1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTable tblTabla;
-    // End of variables declaration//GEN-END:variables
+    // End of variables declaration                   
 }
