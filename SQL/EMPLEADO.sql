@@ -24,190 +24,229 @@ CREATE TABLE TBL_EMPLEADO(
     REFERENCES TBL_CLIENTE (ID_CLIENTE)
 );
 
--- CRUD PARA LA TABLA DE EMPLEADOS
--- PROCEDIMIENTO PARA REGISTRAR EMPLEADOS
-CREATE OR REPLACE PROCEDURE SP_INSERTAR_EMPLEADO(
-    P_ID_EMPLEADO TBL_EMPLEADO.ID_EMPLEADO%TYPE,
-    P_IDENTIFICACION TBL_EMPLEADO.IDENTIFICACION%TYPE,
-    P_NOMBRE TBL_EMPLEADO.NOMBRE%TYPE,
-    P_APELLIDO TBL_EMPLEADO.APELLIDO%TYPE,
-    P_SALARIO TBL_EMPLEADO.SALARIO%TYPE,
-    P_ID_CLIENTE TBL_EMPLEADO.ID_CLIENTE%TYPE,
-    P_HORARIO TBL_EMPLEADO.HORARIO%TYPE
-)AS
-    V_COUNT NUMBER;
-BEGIN
-    SELECT COUNT(*)
-    INTO V_COUNT
-    FROM TBL_EMPLEADO
-    WHERE ID_EMPLEADO = P_ID_EMPLEADO;
-
-    IF V_COUNT > 0 THEN
-        DBMS_OUTPUT.PUT_LINE('YA EXISTE UN REGISTRO CON EL ID ' || P_ID_EMPLEADO);
-    ELSE
-        INSERT INTO TBL_EMPLEADO(ID_EMPLEADO,IDENTIFICACION,NOMBRE,APELLIDO,SALARIO,ID_CLIENTE,HORARIO)
-        VALUES (P_ID_EMPLEADO,P_IDENTIFICACION,P_NOMBRE,P_APELLIDO,P_SALARIO,P_ID_CLIENTE,P_HORARIO);
-        COMMIT;
-        DBMS_OUTPUT.PUT_LINE('REGISTRO REALIZADO');
-    END IF;
-END;
-/
-
--- PROCEDIMIENTO PARA LEER DATOS DE UN EMPLEADO
-CREATE OR REPLACE PROCEDURE SP_LEER_EMPLEADO(
-    P_ID_EMPLEADO NUMBER
-)IS
-    V_IDENTIFICACION TBL_EMPLEADO.IDENTIFICACION%TYPE;
-    V_NOMBRE TBL_EMPLEADO.NOMBRE%TYPE;
-    V_APELLIDO TBL_EMPLEADO.APELLIDO%TYPE;
-    V_SALARIO TBL_EMPLEADO.SALARIO%TYPE;
-    V_ID_CLIENTE TBL_EMPLEADO.ID_CLIENTE%TYPE;
-    V_HORARIO TBL_EMPLEADO.HORARIO%TYPE;
-BEGIN    
-    SELECT IDENTIFICACION, NOMBRE, APELLIDO, SALARIO, ID_CLIENTE, HORARIO INTO V_IDENTIFICACION, V_NOMBRE, V_APELLIDO, V_SALARIO, V_ID_CLIENTE, V_HORARIO
-    FROM TBL_EMPLEADO
-    WHERE ID_EMPLEADO = P_ID_EMPLEADO;
+CREATE OR REPLACE PACKAGE pkg_empleado_utilidades AS
+    -- Declaración de procedimientos y funciones
+    PROCEDURE insertar_empleado(
+        p_id_empleado TBL_EMPLEADO.ID_EMPLEADO%TYPE,
+        p_identificacion TBL_EMPLEADO.IDENTIFICACION%TYPE,
+        p_nombre TBL_EMPLEADO.NOMBRE%TYPE,
+        p_apellido TBL_EMPLEADO.APELLIDO%TYPE,
+        p_salario TBL_EMPLEADO.SALARIO%TYPE,
+        p_id_cliente TBL_EMPLEADO.ID_CLIENTE%TYPE,
+        p_horario TBL_EMPLEADO.HORARIO%TYPE
+    );
     
-    DBMS_OUTPUT.PUT_LINE('IDENTIFICACION: ' || V_IDENTIFICACION || ', NOMBRE: ' || V_NOMBRE || ', APELLIDO: ' || V_APELLIDO || ', SALARIO: ' || V_SALARIO || ', ID_CLIENTE: ' || V_ID_CLIENTE || ', HORARIO: ' || V_HORARIO);
-EXCEPTION
-    WHEN NO_DATA_FOUND THEN
-    DBMS_OUTPUT.PUT_LINE('EL EMPLEADO CON EL ID ' || P_ID_EMPLEADO || ' NO FUE ENCONTRADO.');
-END;
+    PROCEDURE leer_empleado(
+        p_id_empleado NUMBER
+    );
+    
+    PROCEDURE actualizar_empleado(
+        p_id_empleado TBL_EMPLEADO.ID_EMPLEADO%TYPE,
+        p_identificacion TBL_EMPLEADO.IDENTIFICACION%TYPE,
+        p_nombre TBL_EMPLEADO.NOMBRE%TYPE,
+        p_apellido TBL_EMPLEADO.APELLIDO%TYPE,
+        p_salario TBL_EMPLEADO.SALARIO%TYPE,
+        p_id_cliente TBL_EMPLEADO.ID_CLIENTE%TYPE,
+        p_horario TBL_EMPLEADO.HORARIO%TYPE
+    );
+    
+    PROCEDURE eliminar_empleado(
+        p_id_empleado TBL_EMPLEADO.ID_EMPLEADO%TYPE
+    );
+    
+    FUNCTION consultar_empleado_con_identificacion(
+        p_identificacion NUMBER
+    ) RETURN VARCHAR2;
+    
+    FUNCTION consultar_cliente_asociado_a_empleado(
+        p_cedula NUMBER
+    ) RETURN VARCHAR2;
+END pkg_empleado_utilidades;
 /
 
--- PROCEDIMIENTO PARA ACTUALIZAR UN EMPLEADO
-CREATE OR REPLACE PROCEDURE SP_ACTUALIZAR_EMPLEADO(
-    P_ID_EMPLEADO TBL_EMPLEADO.ID_EMPLEADO%TYPE,
-    P_IDENTIFICACION TBL_EMPLEADO.IDENTIFICACION%TYPE,
-    P_NOMBRE TBL_EMPLEADO.NOMBRE%TYPE,
-    P_APELLIDO TBL_EMPLEADO.APELLIDO%TYPE,
-    P_SALARIO TBL_EMPLEADO.SALARIO%TYPE,
-    P_ID_CLIENTE TBL_EMPLEADO.ID_CLIENTE%TYPE,
-    P_HORARIO TBL_EMPLEADO.HORARIO%TYPE
-)AS
-    V_COUNT NUMBER;
-BEGIN
-    SELECT COUNT(*)
-    INTO V_COUNT
-    FROM TBL_EMPLEADO
-    WHERE ID_EMPLEADO = P_ID_EMPLEADO;
+CREATE OR REPLACE PACKAGE BODY pkg_empleado_utilidades AS
+    -- Procedimiento para registrar empleados
+    PROCEDURE insertar_empleado(
+        p_id_empleado TBL_EMPLEADO.ID_EMPLEADO%TYPE,
+        p_identificacion TBL_EMPLEADO.IDENTIFICACION%TYPE,
+        p_nombre TBL_EMPLEADO.NOMBRE%TYPE,
+        p_apellido TBL_EMPLEADO.APELLIDO%TYPE,
+        p_salario TBL_EMPLEADO.SALARIO%TYPE,
+        p_id_cliente TBL_EMPLEADO.ID_CLIENTE%TYPE,
+        p_horario TBL_EMPLEADO.HORARIO%TYPE
+    ) AS
+        v_count NUMBER;
+    BEGIN
+        SELECT COUNT(*)
+        INTO v_count
+        FROM TBL_EMPLEADO
+        WHERE ID_EMPLEADO = p_id_empleado;
 
-    IF V_COUNT > 0 THEN
-        UPDATE TBL_EMPLEADO
-        SET IDENTIFICACION = P_IDENTIFICACION, NOMBRE = P_NOMBRE, APELLIDO = P_APELLIDO, SALARIO = P_SALARIO, ID_CLIENTE = P_ID_CLIENTE, HORARIO = P_HORARIO
-        WHERE ID_EMPLEADO = P_ID_EMPLEADO;
-        COMMIT;
+        IF v_count > 0 THEN
+            DBMS_OUTPUT.PUT_LINE('YA EXISTE UN REGISTRO CON EL ID ' || p_id_empleado);
+        ELSE
+            INSERT INTO TBL_EMPLEADO(ID_EMPLEADO, IDENTIFICACION, NOMBRE, APELLIDO, SALARIO, ID_CLIENTE, HORARIO)
+            VALUES (p_id_empleado, p_identificacion, p_nombre, p_apellido, p_salario, p_id_cliente, p_horario);
+            COMMIT;
+            DBMS_OUTPUT.PUT_LINE('REGISTRO REALIZADO');
+        END IF;
+    END insertar_empleado;
 
-        DBMS_OUTPUT.PUT_LINE('EL EMPLEADO CON EL ID ' || P_ID_EMPLEADO || ' HA SIDO ACTUALIZADO.');
-    ELSE 
-        DBMS_OUTPUT.PUT_LINE('EL EMPLEADO CON EL ID ' || P_ID_EMPLEADO || ' NO FUE ENCONTRADO.');
-    END IF;
-END;
+    -- Procedimiento para leer datos de un empleado
+    PROCEDURE leer_empleado(
+        p_id_empleado NUMBER
+    ) IS
+        v_identificacion TBL_EMPLEADO.IDENTIFICACION%TYPE;
+        v_nombre TBL_EMPLEADO.NOMBRE%TYPE;
+        v_apellido TBL_EMPLEADO.APELLIDO%TYPE;
+        v_salario TBL_EMPLEADO.SALARIO%TYPE;
+        v_id_cliente TBL_EMPLEADO.ID_CLIENTE%TYPE;
+        v_horario TBL_EMPLEADO.HORARIO%TYPE;
+    BEGIN    
+        SELECT IDENTIFICACION, NOMBRE, APELLIDO, SALARIO, ID_CLIENTE, HORARIO
+        INTO v_identificacion, v_nombre, v_apellido, v_salario, v_id_cliente, v_horario
+        FROM TBL_EMPLEADO
+        WHERE ID_EMPLEADO = p_id_empleado;
+        
+        DBMS_OUTPUT.PUT_LINE('IDENTIFICACION: ' || v_identificacion || ', NOMBRE: ' || v_nombre || ', APELLIDO: ' || v_apellido || ', SALARIO: ' || v_salario || ', ID_CLIENTE: ' || v_id_cliente || ', HORARIO: ' || v_horario);
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            DBMS_OUTPUT.PUT_LINE('EL EMPLEADO CON EL ID ' || p_id_empleado || ' NO FUE ENCONTRADO.');
+    END leer_empleado;
+
+    -- Procedimiento para actualizar un empleado
+    PROCEDURE actualizar_empleado(
+        p_id_empleado TBL_EMPLEADO.ID_EMPLEADO%TYPE,
+        p_identificacion TBL_EMPLEADO.IDENTIFICACION%TYPE,
+        p_nombre TBL_EMPLEADO.NOMBRE%TYPE,
+        p_apellido TBL_EMPLEADO.APELLIDO%TYPE,
+        p_salario TBL_EMPLEADO.SALARIO%TYPE,
+        p_id_cliente TBL_EMPLEADO.ID_CLIENTE%TYPE,
+        p_horario TBL_EMPLEADO.HORARIO%TYPE
+    ) AS
+        v_count NUMBER;
+    BEGIN
+        SELECT COUNT(*)
+        INTO v_count
+        FROM TBL_EMPLEADO
+        WHERE ID_EMPLEADO = p_id_empleado;
+
+        IF v_count > 0 THEN
+            UPDATE TBL_EMPLEADO
+            SET IDENTIFICACION = p_identificacion,
+                NOMBRE = p_nombre,
+                APELLIDO = p_apellido,
+                SALARIO = p_salario,
+                ID_CLIENTE = p_id_cliente,
+                HORARIO = p_horario
+            WHERE ID_EMPLEADO = p_id_empleado;
+            COMMIT;
+
+            DBMS_OUTPUT.PUT_LINE('EL EMPLEADO CON EL ID ' || p_id_empleado || ' HA SIDO ACTUALIZADO.');
+        ELSE 
+            DBMS_OUTPUT.PUT_LINE('EL EMPLEADO CON EL ID ' || p_id_empleado || ' NO FUE ENCONTRADO.');
+        END IF;
+    END actualizar_empleado;
+
+    -- Procedimiento para eliminar un empleado
+    PROCEDURE eliminar_empleado(
+        p_id_empleado TBL_EMPLEADO.ID_EMPLEADO%TYPE
+    ) AS
+        v_count NUMBER;
+    BEGIN
+        SELECT COUNT(*)
+        INTO v_count
+        FROM TBL_EMPLEADO
+        WHERE ID_EMPLEADO = p_id_empleado;
+
+        IF v_count > 0 THEN
+            DELETE FROM TBL_EMPLEADO
+            WHERE ID_EMPLEADO = p_id_empleado;
+            COMMIT;
+
+            DBMS_OUTPUT.PUT_LINE('EL EMPLEADO CON EL ID ' || p_id_empleado || ' FUE ELIMINADO CORRECTAMENTE.');
+        ELSE
+            DBMS_OUTPUT.PUT_LINE('EL EMPLEADO CON EL ID ' || p_id_empleado || ' NO FUE ENCONTRADO.');
+        END IF;
+    END eliminar_empleado;
+
+    -- Función para buscar empleado por identificación
+    FUNCTION consultar_empleado_con_identificacion(
+        p_identificacion NUMBER
+    ) RETURN VARCHAR2 IS
+        v_identificacion TBL_EMPLEADO.IDENTIFICACION%TYPE;
+        v_nombre TBL_EMPLEADO.NOMBRE%TYPE;
+    BEGIN
+        SELECT IDENTIFICACION, NOMBRE || ' ' || APELLIDO
+        INTO v_identificacion, v_nombre
+        FROM TBL_EMPLEADO
+        WHERE IDENTIFICACION = p_identificacion;
+        
+        RETURN 'EL EMPLEADO CON LA IDENTIFICACION: ' || v_identificacion || ' SE LLAMA: ' || v_nombre;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            RETURN 'EL EMPLEADO CON LA IDENTIFICACION: ' || p_identificacion || ' NO FUE ENCONTRADO';
+        WHEN OTHERS THEN
+            RETURN 'ERROR AL CONSULTAR LA IDENTIFICACION';
+    END consultar_empleado_con_identificacion;
+
+    -- Función para buscar cliente asociado a empleado por cédula
+    FUNCTION consultar_cliente_asociado_a_empleado(
+        p_cedula NUMBER
+    ) RETURN VARCHAR2 IS
+        v_nombre_empleado TBL_EMPLEADO.NOMBRE%TYPE;
+        v_nombre_cliente TBL_CLIENTE.NOMBRE%TYPE;
+    BEGIN
+        SELECT E.NOMBRE || ' ' || E.APELLIDO, C.NOMBRE || ' ' || C.APELLIDO
+        INTO v_nombre_empleado, v_nombre_cliente
+        FROM TBL_EMPLEADO E
+        INNER JOIN TBL_CLIENTE C ON E.ID_CLIENTE = C.ID_CLIENTE
+        WHERE C.CEDULA = p_cedula;
+        
+        RETURN 'EL CLIENTE CON CEDULA: ' || p_cedula || ' FUE ENCONTRADO Y ESTÁ ASIGNADO AL EMPLEADO: ' || v_nombre_empleado;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            RETURN 'EL CLIENTE CON CEDULA: ' || p_cedula || ' NO FUE ENCONTRADO';
+        WHEN OTHERS THEN
+            RETURN 'ERROR AL CONSULTAR EL CLIENTE';
+    END consultar_cliente_asociado_a_empleado;
+END pkg_empleado_utilidades;
 /
 
--- PRECEDIMIENTO PARA ELIMINAR UN EMPLEADO
-CREATE OR REPLACE PROCEDURE SP_ELIMINAR_EMPLEADO(
-    P_ID_EMPLEADO TBL_EMPLEADO.ID_EMPLEADO%TYPE
-)AS
-    V_COUNT NUMBER;
-BEGIN
-    SELECT COUNT(*)
-    INTO V_COUNT
-    FROM TBL_EMPLEADO
-    WHERE ID_EMPLEADO = P_ID_EMPLEADO;
+-- Crear vistas
+CREATE OR REPLACE VIEW vista_listar_empleados AS 
+SELECT IDENTIFICACION || ' ' || UPPER(NOMBRE) || ' ' || UPPER(APELLIDO) AS "INFORMACION PERSONAL", 
+       HORARIO AS "HORARIO LABORAL"
+FROM TBL_EMPLEADO 
+ORDER BY NOMBRE 
+WITH READ ONLY;
 
-    IF V_COUNT > 0 THEN
-
-        DELETE FROM TBL_EMPLEADO
-        WHERE ID_EMPLEADO = P_ID_EMPLEADO;
-        COMMIT;
-
-        DBMS_OUTPUT.PUT_LINE('EL EMPLEADO CON EL ID ' || P_ID_EMPLEADO || ' FUE ELIMINADO CORRECTAMENTE.');
-    ELSE
-        DBMS_OUTPUT.PUT_LINE('EL EMPLEADO CON EL ID ' || P_ID_EMPLEADO || ' NO FUE ENCONTRADO.');
-    END IF;
-END;
-/
-
---Inicia bloque funciones
---Busqueda de empleado por identificacion
-CREATE OR REPLACE FUNCTION CONSULTAR_EMPLEADO_CON_IDENTIFICACION(IDENTIFICACION_IN NUMBER)
-RETURN VARCHAR2
-IS
-    IDENTIFICACION TBL_EMPLEADO.IDENTIFICACION%TYPE;
-    NOMBRE TBL_EMPLEADO.NOMBRE%TYPE;
-BEGIN
-    -- Buscar el nombre Y apellido del empleado en la tabla TBL_EMPLEADO tomando como parametro la identificacion
-    SELECT E.IDENTIFICACION, E.NOMBRE || ' ' || E.APELLIDO
-    INTO IDENTIFICACION, NOMBRE
-    FROM TBL_EMPLEADO E
-    WHERE IDENTIFICACION = IDENTIFICACION_IN;
-    -- Retornar el resultado
-    RETURN 'EL EMPLEADO CON LA IDENTIFICACION: ' || IDENTIFICACION || ' SE LLAMA: ' || NOMBRE;
-EXCEPTION
-    WHEN NO_DATA_FOUND THEN
-        RETURN 'EL EMPLEADO CON LA IDENTIFICACION: ' || IDENTIFICACION || ' NO FUE ENCONTRADO';
-    WHEN OTHERS THEN
-        RETURN 'ERROR AL CONSULTAR LA IDENTIFICACION';
-END;
-/
-
---Busqueda de cliente por nombre
-CREATE OR REPLACE FUNCTION CONSULTAR_CLIENTE_ASOCIADO_A_EMPLEADO(CEDULA_IN NUMBER)
-RETURN VARCHAR2
-IS
-    NOMBRE TBL_EMPLEADO.NOMBRE%TYPE;
-    NOMBRE_CLIENTE TBL_CLIENTE.NOMBRE%TYPE;
-BEGIN
-    -- Buscar el nombre del canton en la tabla TBL_CANTON
-    SELECT E.NOMBRE || ' ' || E.APELLIDO "NOMBRE DEL EMPLEADO", C.NOMBRE || ' ' || C.APELLIDO "NOMBRE DEL CLIENTE ASIGNADO AL EMPLEADO"
-    INTO NOMBRE, NOMBRE_CLIENTE
-    FROM TBL_EMPLEADO E
-    INNER JOIN TBL_CLIENTE C ON E.ID_CLIENTE = C.ID_CLIENTE
-    WHERE REGEXP_LIKE(C.CEDULA, CEDULA_IN, 'i');
-    -- Retornar el resultado
-    RETURN 'EL CLIENTE CON CEDULA: ' || CEDULA_IN || ' FUE ENCONTRADO Y ESTA ASIGNADO AL EMPLEADO : ' || NOMBRE;
-EXCEPTION
-    WHEN NO_DATA_FOUND THEN
-        RETURN 'EL CLIENTE CON CEDULA: ' || CEDULA_IN || ' NO FUE ENCONTRADO';
-    WHEN OTHERS THEN
-        RETURN 'ERROR AL CONSULTAR EL CLIENTE';
-END;
-/
-
---Busqueda de cliente asociado a empleado por nombre de cliente
-
---VISTA PARA LISTAR TODOS LOS EMPLEADOS POR NOMBRE, APELLIDO Y IDENTIFICACION
-CREATE OR REPLACE VIEW VISTA_LISTAR_EMPLEADOS AS 
-SELECT IDENTIFICACION || ' ' || Upper(NOMBRE) || ' ' || Upper(APELLIDO) "INFORMACION PERSONAL", HORARIO "HORARIO LABORAL" FROM TBL_EMPLEADO ORDER BY NOMBRE WITH READ ONLY;
-
---VISTA PARA VER LA CANTIDAD DE EMPLEADOS
-CREATE OR REPLACE VIEW VISTA_CANTIDAD_DE_EMPLEADOS AS 
-SELECT COUNT(IDENTIFICACION) "CANTIDAD DE EMPLEADOS" FROM TBL_EMPLEADO WITH READ ONLY;
+CREATE OR REPLACE VIEW vista_cantidad_de_empleados AS 
+SELECT COUNT(IDENTIFICACION) AS "CANTIDAD DE EMPLEADOS" 
+FROM TBL_EMPLEADO 
+WITH READ ONLY;
 
 -- Inserciones en la tabla TBL_EMPLEADO
 
 -- Con registros en TBL_EMPLEADO con ID_CLIENTE de 1 a 5
 
--- Inserción 1
-EXEC SP_INSERTAR_EMPLEADO(1, 123456789, 'Ana', 'García', 3000.00, 1, TO_DATE('2024-07-26', 'YYYY-MM-DD'));
+EXEC pkg_empleado_utilidades.insertar_empleado(1, 123456789, 'Ana', 'García', 3000.00, 1, TO_DATE('2024-07-26', 'YYYY-MM-DD'));
 
--- Inserción 2
-EXEC SP_INSERTAR_EMPLEADO(2, 987654321, 'Luis', 'Pérez', 3500.00, 2, TO_DATE('2024-07-26', 'YYYY-MM-DD'));
+EXEC pkg_empleado_utilidades.insertar_empleado(2, 987654321, 'Luis', 'Pérez', 3500.00, 2, TO_DATE('2024-07-26', 'YYYY-MM-DD'));
 
--- Inserción 3
-EXEC SP_INSERTAR_EMPLEADO(3, 456123789, 'María', 'Rodríguez', 4000.00, 3, TO_DATE('2024-07-26', 'YYYY-MM-DD'));
+EXEC pkg_empleado_utilidades.insertar_empleado(3, 456123789, 'María', 'Rodríguez', 4000.00, 3, TO_DATE('2024-07-26', 'YYYY-MM-DD'));
 
--- Inserción 4
-EXEC SP_INSERTAR_EMPLEADO(4, 321654987, 'Carlos', 'Mendoza', 3200.00, 4, TO_DATE('2024-07-26', 'YYYY-MM-DD'));
+EXEC pkg_empleado_utilidades.insertar_empleado(4, 321654987, 'Carlos', 'Mendoza', 3200.00, 4, TO_DATE('2024-07-26', 'YYYY-MM-DD'));
 
--- Inserción 5
-EXEC SP_INSERTAR_EMPLEADO(5, 147258369, 'Lucía', 'Martínez', 2800.00, 5, TO_DATE('2024-07-26', 'YYYY-MM-DD'));
+EXEC pkg_empleado_utilidades.insertar_empleado(5, 147258369, 'Lucía', 'Martínez', 2800.00, 5, TO_DATE('2024-07-26', 'YYYY-MM-DD'));
+
 
 --Llamando vistas
 SELECT "INFORMACION PERSONAL" FROM vista_listar_empleados;
 SELECT "CANTIDAD DE EMPLEADOS" FROM vista_cantidad_de_empleados;
 
 --Llamando funciones de empleado
-SELECT CONSULTAR_EMPLEADO_CON_IDENTIFICACION(123456789) RESULTADO FROM DUAL;
-SELECT CONSULTAR_CLIENTE_ASOCIADO_A_EMPLEADO(505050505) RESULTADO FROM DUAL;
+SELECT pkg_empleado_utilidades.consultar_empleado_con_identificacion(123456789) RESULTADO FROM DUAL;
+SELECT pkg_empleado_utilidades.consultar_cliente_asociado_a_empleado(505050505) RESULTADO FROM DUAL;
+
+
