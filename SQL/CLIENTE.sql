@@ -292,22 +292,55 @@ WITH READ ONLY;
 
 --Probando Insercion
 -- Inserciones de ejemplo en la tabla TBL_CLIENTE
-EXEC pkg_cliente.sp_insertar_cliente(222, 12543523, 'Dylan', 'CANDIA', 987654321, '25-JUL-24', 'Avenida 1');
+EXEC pkg_cliente.sp_insertar_cliente(222, 1254352, 'Dylan', 'CANDIA', 9876543, '25-JUL-24', 'Avenida 1');
 EXEC pkg_cliente.sp_leer_cliente(222);
-EXEC pkg_cliente.sp_actualizar_cliente(222, 987654535, 'DYLAN', 'Candia', 654874687, '20-JUL-24', 'Avenida 2');
-EXEC pkg_cliente.sp_eliminar_cliente(222);
+EXEC pkg_cliente.sp_actualizar_cliente(222, 987654535, 'DYLAN', 'Candia', 654874687, sysdate, 'Avenida 2');
+EXEC pkg_cliente.sp_eliminar_cliente(5);
 EXEC pkg_cliente.sp_listar_clientes;
 
 -- Inserción 1
-EXEC pkg_cliente.sp_insertar_cliente(1, 246813579, 'Marshall', 'Zarate', 9876543210, TO_DATE('2024-01-15', 'YYYY-MM-DD'), 'Calle Falsa 123, Ciudad Ficticia');
+EXEC pkg_cliente.sp_insertar_cliente(1, 246813579, 'Marshall', 'Zarate', 98765432, TO_DATE('2024-01-15', 'YYYY-MM-DD'), 'Calle Falsa 123, Ciudad Ficticia');
+EXEC pkg_cliente.sp_insertar_cliente(2, 1357924, 'Luis', 'Guerra', 12345678, TO_DATE('2024-02-20', 'YYYY-MM-DD'), 'Avenida Siempre Viva 742, Ciudad Real');
+EXEC pkg_cliente.sp_insertar_cliente(3, 8642097, 'Rocío', 'Jimenez', 24681357, TO_DATE('2024-03-10', 'YYYY-MM-DD'), 'Boulevard de los Sueños 100, Villa Esperanza');
+EXEC pkg_cliente.sp_insertar_cliente(4, 999999, 'Juan', 'Carmona', 13579246, TO_DATE('2024-04-05', 'YYYY-MM-DD'), 'Plaza Mayor 500, Ciudad Dorada');
+EXEC pkg_cliente.sp_insertar_cliente(5, 5050505, 'Wanda', 'Nara', 86420971, TO_DATE('2024-05-25', 'YYYY-MM-DD'), 'Calle del Sol 50, Colina Verde');
+EXEC pkg_cliente.sp_insertar_cliente(6, 12345678, 'Ana', 'García', 5551234, TO_DATE('2024-07-15', 'YYYY-MM-DD'), 'Calle Principal 1, Ciudad A');
+EXEC pkg_cliente.sp_insertar_cliente(7, 23456789, 'Luis', 'Martínez', 5555678, TO_DATE('2024-07-20', 'YYYY-MM-DD'), 'Calle Secundaria 2, Ciudad B');
+EXEC pkg_cliente.sp_insertar_cliente(8, 34567890, 'Marta', 'Rodríguez', 5559101, TO_DATE('2024-07-25', 'YYYY-MM-DD'), 'Avenida Libertad 3, Ciudad C');
+EXEC pkg_cliente.sp_insertar_cliente(9, 45678901, 'Pedro', 'Fernández', 5551122, TO_DATE('2024-08-01', 'YYYY-MM-DD'), 'Plaza Mayor 4, Ciudad D');
 
-EXEC pkg_cliente.sp_insertar_cliente(2, 135792468, 'Luis', 'Guerra', 1234567890, TO_DATE('2024-02-20', 'YYYY-MM-DD'), 'Avenida Siempre Viva 742, Ciudad Real');
+EXEC pkg_cliente.sp_leer_cliente(1);
+EXEC pkg_cliente.sp_leer_cliente(2);
+EXEC pkg_cliente.sp_leer_cliente(3);
+EXEC pkg_cliente.sp_leer_cliente(4);
 
-EXEC pkg_cliente.sp_insertar_cliente(3, 864209753, 'Rocío', 'Jimenez', 2468135790, TO_DATE('2024-03-10', 'YYYY-MM-DD'), 'Boulevard de los Sueños 100, Villa Esperanza');
+EXEC pkg_cliente.sp_actualizar_cliente(6, 12345678, 'Ana', 'García', 5551234, TO_DATE('2024-08-10', 'YYYY-MM-DD'), 'Calle Nueva 1, Ciudad A');
+EXEC pkg_cliente.sp_actualizar_cliente(7, 23456789, 'Luis', 'Martínez', 5555678, TO_DATE('2024-08-15', 'YYYY-MM-DD'), 'Calle Modificada 2, Ciudad B');
+EXEC pkg_cliente.sp_actualizar_cliente(8, 34567890, 'Marta', 'Rodríguez', 5559101, TO_DATE('2024-08-20', 'YYYY-MM-DD'), 'Avenida Cambiada 3, Ciudad C');
+EXEC pkg_cliente.sp_actualizar_cliente(9, 45678901, 'Pedro', 'Fernández', 5551122, TO_DATE('2024-08-25', 'YYYY-MM-DD'), 'Plaza Actualizada 4, Ciudad D');
 
-EXEC pkg_cliente.sp_insertar_cliente(4, 999999999, 'Juan', 'Carmona', 1357924680, TO_DATE('2024-04-05', 'YYYY-MM-DD'), 'Plaza Mayor 500, Ciudad Dorada');
+EXEC pkg_cliente.sp_eliminar_cliente(6);
+EXEC pkg_cliente.sp_eliminar_cliente(7);
+EXEC pkg_cliente.sp_eliminar_cliente(8);
+EXEC pkg_cliente.sp_eliminar_cliente(9);
 
-EXEC pkg_cliente.sp_insertar_cliente(5, 505050505, 'Wanda', 'Nara', 8642097531, TO_DATE('2024-05-25', 'YYYY-MM-DD'), 'Calle del Sol 50, Colina Verde');
+EXEC pkg_cliente_utilidades.listar_clientes_por_letra('A');
+EXEC pkg_cliente_utilidades.listar_clientes_por_letra('L');
+EXEC pkg_cliente_utilidades.listar_clientes_por_letra('C');
+EXEC pkg_cliente_utilidades.listar_clientes_por_letra('M');
+
+SELECT pkg_cliente_utilidades.consultar_cliente_con_cedula(56789012) FROM DUAL;
+SELECT pkg_cliente_utilidades.consultar_cliente_con_cedula(67890123) FROM DUAL;
+SELECT pkg_cliente_utilidades.consultar_cliente_con_cedula(78901234) FROM DUAL;
+SELECT pkg_cliente_utilidades.consultar_cliente_con_cedula(89012345) FROM DUAL;
+
+SELECT pkg_cliente_utilidades.consultar_cliente_por_nombre('Luis') FROM DUAL;
+SELECT pkg_cliente_utilidades.consultar_cliente_por_nombre('Juan') FROM DUAL;
+SELECT pkg_cliente_utilidades.consultar_cliente_por_nombre('Ana') FROM DUAL;
+SELECT pkg_cliente_utilidades.consultar_cliente_por_nombre('Pedro') FROM DUAL;
+
+
+EXEC pkg_cliente_utilidades.listar_clientes_mes_actual;
 
 
 --LLAMAR A LA VISTA CLIENTE
@@ -317,5 +350,7 @@ SELECT "CANTIDAD DE CLIENTES" from VISTA_CANTIDAD_DE_CLIENTES;
 --Llamando funciones de Cliente
 SELECT pkg_cliente_utilidades.consultar_cliente_con_cedula(505050505) FROM DUAL;
 SELECT pkg_cliente_utilidades.consultar_cliente_por_nombre('DYLAN') FROM DUAL;
+
+
 
 
